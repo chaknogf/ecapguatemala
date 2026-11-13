@@ -1,0 +1,229 @@
+<div class="head">
+  <div>
+    <h1>Ventas</h1>
+    <p class="sub">Pedido → reserva FEFO → despacho → factura → cobro</p>
+  </div>
+  @if (canSo()) { <button class="btn primary" (click)="showForm.set(!showForm())">{{ showForm() ? 'Cerrar' : '+ Nuevo pedido' }}</button> }
+</div>
+
+@if (showForm()) {
+  <form class="panel glass-panel" (ngSubmit)="createOrder()">
+    <h2>Pedido de cliente</h2>
+    <div class="fields">
+      <label>Cliente
+        <select [value]="formCustomer()" (change)="formCustomer.set($any($event.target).value)">
+          <option value="">— seleccione —</option>
+          @for (c of customers(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+        </select>
+      </label>
+      <label>Bodega
+        <select [value]="formWarehouse()" (change)="formWarehouse.set($any($event.target).value)">
+          @for (w of warehouses(); track w.id) { <option [value]="w.id">{{ w.name }}</option> }
+        </select>
+      </label>
+    </div>
+    <div class="lines-edit">
+      @for (l of formLines(); track $index) {
+        <div class="line">
+          <select [value]="l.product_id" (change)="setLine($index, 'product_id', $any($event.target).value)">
+            <option value="">— producto —</option>
+            @for (p of products(); track p.id) { <option [value]="p.id">{{ p.sku }} · {{ p.name }} ({{ p.sale_price }})</option> }
+          </select>
+          <input type="number" step="0.0001" min="0" placeholder="cant" [value]="l.quantity" (input)="setLine($index, 'quantity', $any($event.target).value)" />
+          <input type="number" step="0.01" min="0" placeholder="precio" [value]="l.unit_price" (input)="setLine($index, 'unit_price', $any($event.target).value)" />
+          <input type="number" step="0.1" min="0" max="100" placeholder="desc %" [value]="l.discount_pct" (input)="setLine($index, 'discount_pct', $any($event.target).value)" />
+          <input type="number" step="0.1" placeholder="IVA %" [value]="l.tax_rate_pct" (input)="setLine($index, 'tax_rate_pct', $any($event.target).value)" />
+          @if (formLines().length > 1) { <button class="link danger" type="button" (click)="removeLine($index)">✕</button> }
+        </div>
+      }
+      <button class="link" type="button" (click)="addLine()">+ Agregar línea</button>
+    </div>
+    <button class="btn primary" type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear pedido' }}</button>
+  </form>
+}
+
+<div class="tabs">
+  <button [class.active]="tab() === 'orders'" (click)="tab.set('orders')">Pedidos</button>
+  <button [class.active]="tab() === 'invoices'" (click)="tab.set('invoices')">Facturas y saldos</button>
+</div>
+
+@if (tab() === 'orders') {
+  <div class="table-wrap glass-panel">
+    @if (loading()) { <div class="rows"><span class="spin"></span> Cargando…</div> }
+    @else if (!byFilter().length) { <div class="empty">Sin pedidos.</div> }
+    @else {
+      <table>
+        <thead><tr><th>Número</th><th>Cliente</th><th>Estado</th><th class="num">Total</th><th>Fecha</th><th></th></tr></thead>
+        <tbody>
+          @for (o of byFilter(); track o.id) {
+            <tr>
+              <td class="mono">{{ o.document_number }}</td>
+              <td>{{ customerName(o.customer_id) }}</td>
+              <td>
+                <v1-status [status]="o.status" />
+                @if (progress(o); as p) {
+                  @if (o.status === 'partial' || o.status === 'dispatched' || o.status === 'invoiced') {
+                    <br /><small class="sub2">Despachado {{ p.dispatched }}/{{ p.total }} · Facturado {{ p.invoiced }}/{{ p.total }}</small>
+                  }
+                }
+              </td>
+              <td class="num">{{ total(o) }}</td>
+              <td>{{ o.order_date }}</td>
+              <td class="actions">
+                @if (o.status === 'draft' && canSo()) { <button class="link" (click)="confirmOrder(o)">Confirmar</button> }
+                @if (canCancelOrder(o)) { <button class="link danger" (click)="openCancel(o)">Cancelar</button> }
+                @if ((o.status === 'confirmed' || o.status === 'partial') && canDispatch()) { <button class="link" (click)="openDispatch(o)">Despachar</button> }
+                @if (canInvoiceOrder(o)) { <button class="link" (click)="openInvoice(o)">{{ o.status === 'partial' ? 'Facturar entregado' : 'Facturar' }}</button> }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+} @else {
+  <section class="glass-panel panel2">
+    <h2>Cuentas por cobrar (antigüedad)</h2>
+    @if (!receivables().length) { <p class="empty">Sin saldos pendientes ✓</p> }
+    @else {
+      <table class="min">
+        <thead><tr><th>Factura</th><th>Cliente</th><th class="num">Saldo</th><th class="num">Días vencida</th><th></th></tr></thead>
+        <tbody>
+          @for (r of receivables(); track r.invoice_id) {
+            <tr>
+              <td class="mono">{{ r.document }}</td>
+              <td>{{ r.customer }}</td>
+              <td class="num">{{ r.balance }}</td>
+              <td class="num">{{ r.days_late }} <small>({{ r.bucket }})</small></td>
+              <td>@if (canPay()) { <button class="link" (click)="payInvoice(r)">Cobrar</button> }</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <section class="glass-panel panel2">
+    <h2>Facturas emitidas</h2>
+    @if (!invoices().length) { <p class="empty">Sin facturas.</p> }
+    @else {
+      <table class="min">
+        <thead><tr><th>Número</th><th>Cliente</th><th>Vence</th><th class="num">Base</th><th class="num">IVA</th><th class="num">Total</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          @for (i of invoices(); track i.id) {
+            <tr>
+              <td class="mono">{{ i.document_number }}</td>
+              <td>{{ i.customer_snapshot['name'] }}</td>
+              <td>{{ i.due_date ?? '—' }}</td>
+              <td class="num">{{ i.totals.base_total }}</td>
+              <td class="num">{{ i.totals.tax_total }}</td>
+              <td class="num">{{ i.totals.grand_total }}</td>
+              <td><v1-status [status]="i.payment_type" [textOverride]="i.payment_type === 'cash' ? 'Contado' : 'Crédito'" /></td>
+              <td>
+                @if (i.is_credit_note) { <span class="pill off">Nota de crédito</span> }
+                @else if (i.annulled_by) { <span class="pill off">Anulada</span><br /><small>por {{ i.annulled_by }}</small> }
+                @else { <span class="pill on">Emitida</span> }
+              </td>
+              <td class="actions">@if (canAnnul(i)) { <button class="link danger" (click)="openAnnul(i)">Anular</button> }</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}
+
+@if (dispatchFor(); as o) {
+  <div class="backdrop" (click)="dispatchFor.set(null)">
+    <div class="modal glass-panel wide" (click)="$event.stopPropagation()">
+      <h3>Despachar {{ o.document_number }}</h3>
+      <p class="sub2">Se consumen las reservas FEFO del pedido y se descuenta el stock físico.</p>
+      @for (l of o.lines; track l.id) {
+        <div class="line">
+          <span class="pname">{{ productName(l.product_id) }}</span>
+          <small>pend. {{ dispatchPending(l) }}</small>
+          <input type="number" step="0.0001" min="0" [max]="dispatchPending(l)" [value]="dispatchValue(l)"
+            (input)="setDispatchQty(l.id, $any($event.target).value)" />
+        </div>
+      }
+      <div class="row end">
+        <button class="btn ghost" (click)="dispatchFor.set(null)">Cancelar</button>
+        <button class="btn primary" (click)="dispatch()">Confirmar despacho</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (invoiceFor(); as o) {
+  <div class="backdrop" (click)="invoiceFor.set(null)">
+    <div class="modal glass-panel" (click)="$event.stopPropagation()">
+      <h3>Facturar {{ o.document_number }}</h3>
+      <label class="check"><input type="checkbox" [checked]="cashSale()" (change)="cashSale.set($any($event.target).checked)" /> Venta de contado (pago en caja)</label>
+      @if (o.status === 'partial') {
+        <p class="hint">Este pedido tiene entregas pendientes. La factura cubre solo lo despachado y aún no facturado: <strong>{{ pendingToInvoice(o) }}</strong> unidad(es). El resto se facturará cuando se despache.</p>
+      }
+      <p class="sub2">La factura comercial congela cliente, precios e impuestos. No es una factura fiscal FEL.</p>
+      <div class="row end">
+        <button class="btn ghost" (click)="invoiceFor.set(null)">Cancelar</button>
+        <button class="btn primary" (click)="invoice()">Emitir factura</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (payFor(); as i) {
+  <div class="backdrop" (click)="payFor.set(null)">
+    <div class="modal glass-panel" (click)="$event.stopPropagation()">
+      <h3>Cobrar {{ i.document_number }}</h3>
+      <p class="sub2">Saldo: {{ balanceOf(i) }}</p>
+      <div class="fields single">
+        <label>Monto <input type="number" step="0.01" min="0.01" [value]="payAmount()" (input)="payAmount.set($any($event.target).value)" /></label>
+        <label>Método
+          <select [value]="payMethod()" (change)="payMethod.set($any($event.target).value)">
+            @for (m of methods(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+          </select>
+        </label>
+      </div>
+      <div class="row end">
+        <button class="btn ghost" (click)="payFor.set(null)">Cancelar</button>
+        <button class="btn primary" (click)="pay()">Registrar cobro</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (cancelFor(); as c) {
+  <div class="backdrop" (click)="cancelFor.set(null)">
+    <div class="modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="cancel-so-title" (click)="$event.stopPropagation()">
+      <h3 id="cancel-so-title">Cancelar pedido {{ c.document_number }}</h3>
+      <p>Las existencias reservadas para este pedido se liberarán y volverán a estar disponibles. El pedido queda en el historial con su motivo.</p>
+      <label class="wide">Motivo de la cancelación <span class="req">*</span>
+        <textarea rows="3" [(ngModel)]="cancelReason" placeholder="p. ej. El cliente desistió de la compra"></textarea>
+      </label>
+      <div class="row end">
+        <button class="btn ghost" (click)="cancelFor.set(null)">Volver</button>
+        <button class="btn danger" [disabled]="cancelReason.trim().length < 3" (click)="confirmCancel()">Confirmar cancelación</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (annulFor(); as a) {
+  <div class="backdrop" (click)="annulFor.set(null)">
+    <div class="modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="annul-title" (click)="$event.stopPropagation()">
+      <h3 id="annul-title">Anular factura {{ a.document_number }}</h3>
+      <p>Se emitirá una <strong>nota de crédito</strong> por el total de la factura. La factura original no se borra y queda marcada como anulada.</p>
+      <ul class="sub2">
+        <li>La mercadería no regresa al inventario automáticamente. Si el cliente la devuelve, regístrela en Movimientos como devolución entrante.</li>
+        <li>Las facturas con cobros registrados no pueden anularse en esta versión.</li>
+      </ul>
+      <label class="wide">Motivo de la anulación <span class="req">*</span>
+        <textarea rows="3" [(ngModel)]="annulReason" placeholder="p. ej. Precio facturado incorrectamente"></textarea>
+      </label>
+      <div class="row end">
+        <button class="btn ghost" (click)="annulFor.set(null)">Volver</button>
+        <button class="btn danger" [disabled]="annulReason.trim().length < 3" (click)="confirmAnnul()">Emitir nota de crédito</button>
+      </div>
+    </div>
+  </div>
+}

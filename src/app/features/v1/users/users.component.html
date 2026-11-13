@@ -1,0 +1,64 @@
+<div class="head">
+  <div><h1>Usuarios y roles</h1><p class="sub">Acceso por empresa · la autorización real se aplica en el backend</p></div>
+  <button class="btn primary" (click)="openNew()">+ Nuevo usuario</button>
+</div>
+
+@if (showForm()) {
+  <form class="panel glass-panel" (ngSubmit)="save()">
+    <h2>{{ editing() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+    <div class="fields">
+      @if (!editing()) {
+        <label>Correo* <input type="email" [value]="form().email" (input)="setField('email', $any($event.target).value)" /></label>
+      }
+      <label>Nombre* <input [value]="form().full_name" (input)="setField('full_name', $any($event.target).value)" /></label>
+      <label>{{ editing() ? 'Nueva contraseña (opcional)' : 'Contraseña* (mín. 10)' }}
+        <input type="password" [value]="form().password" (input)="setField('password', $any($event.target).value)" autocomplete="new-password" />
+      </label>
+    </div>
+    <div class="roles">
+      @for (r of roles(); track r.id) {
+        <label class="role-chip" [class.on]="form().role_codes.includes(r.code)">
+          <input type="checkbox" [checked]="form().role_codes.includes(r.code)" (change)="toggleRole(r.code)" />
+          {{ r.name }} <small>{{ r.code }}</small>
+        </label>
+      }
+    </div>
+    <div class="row">
+      <button class="btn primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button>
+      <button class="btn ghost" type="button" (click)="showForm.set(false)">Cancelar</button>
+    </div>
+  </form>
+}
+
+<div class="toolbar">
+  <input type="search" placeholder="Buscar por nombre o correo…" [value]="search()" (input)="onSearch($any($event.target).value)" />
+</div>
+
+<div class="table-wrap glass-panel">
+  @if (loading()) { <div class="rows"><span class="spin"></span> Cargando…</div> }
+  @else if (!users().length) { <div class="empty">Sin usuarios.</div> }
+  @else {
+    <table>
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Roles</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        @for (u of users(); track u.id) {
+          <tr>
+            <td><strong>{{ u.full_name }}</strong>@if (u.is_platform_admin) { <span class="tag">plataforma</span> }</td>
+            <td>{{ u.email }}</td>
+            <td>@for (r of u.roles; track r) { <span class="tag">{{ r }}</span> } @if (!u.roles.length) { <small>—</small> }</td>
+            <td>
+              <span [class]="'pill ' + (u.active ? 'on' : 'off')">{{ u.active ? 'Activo' : 'Inactivo' }}</span>
+              @if (u.must_change_password && u.active) { <br /><small class="warn">cambiará clave al ingresar</small> }
+            </td>
+            <td class="actions">
+              <button class="link" (click)="edit(u)">Editar</button>
+              <button class="link" [class.danger]="u.active" (click)="toggleActive(u)">{{ u.active ? 'Desactivar' : 'Activar' }}</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<v1-confirm #cm />

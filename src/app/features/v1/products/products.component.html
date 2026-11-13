@@ -1,0 +1,96 @@
+<div class="head">
+  <div>
+    <h1>Catálogo</h1>
+    <p class="sub">{{ products().length }} producto(s)</p>
+  </div>
+  @if (canWrite()) {
+    <button class="btn primary" (click)="showForm.set(!showForm())">
+      {{ showForm() ? 'Cerrar' : '+ Nuevo producto' }}
+    </button>
+  }
+</div>
+
+<div class="toolbar">
+  <input type="search" placeholder="Buscar por nombre, SKU, código o barra…" [value]="search()"
+    (input)="onSearch($any($event.target).value)" aria-label="Buscar productos" />
+</div>
+
+@if (showForm()) {
+  <form class="panel glass-panel" (ngSubmit)="save()">
+    <h2>Nuevo producto</h2>
+    <div class="fields">
+      <label>SKU* <input name="sku" [value]="form().sku" (input)="set('sku', $any($event.target).value)" required /></label>
+      <label>Nombre* <input name="name" [value]="form().name" (input)="set('name', $any($event.target).value)" required /></label>
+      <label>Tipo
+        <select name="ptype" [value]="form().product_type" (change)="set('product_type', $any($event.target).value)">
+          <option value="finished">Terminado</option>
+          <option value="raw">Materia prima</option>
+          <option value="service">Servicio</option>
+          <option value="package">Empaque</option>
+          <option value="kit">Kit</option>
+        </select>
+      </label>
+      <label>Unidad
+        <select name="unit" [value]="form().stock_unit_id" (change)="set('stock_unit_id', $any($event.target).value)">
+          <option value="">—</option>
+          @for (u of units(); track u.id) { <option [value]="u.id">{{ u.name }}</option> }
+        </select>
+      </label>
+      <label>C. barras <div style="display:flex;gap:8px"><input name="barcode" [value]="form().barcode" (input)="set('barcode', $any($event.target).value)" /><button type="button" (click)="openScanner()">Escanear</button></div></label>
+      <label>Precio venta <input name="sp" type="number" step="0.01" min="0" [value]="form().sale_price" (input)="set('sale_price', $any($event.target).value)" /></label>
+      <label>Costo <input name="pc" type="number" step="0.01" min="0" [value]="form().purchase_cost" (input)="set('purchase_cost', $any($event.target).value)" /></label>
+      <label>Mínimo <input name="ms" type="number" step="0.0001" min="0" [value]="form().min_stock" (input)="set('min_stock', $any($event.target).value)" /></label>
+      <label class="check"><input type="checkbox" name="lots" [checked]="form().track_lots" (change)="set('track_lots', $any($event.target).checked)" /> Lotes</label>
+      <label class="check"><input type="checkbox" name="exp" [checked]="form().track_expiry" (change)="set('track_expiry', $any($event.target).checked)" /> Vencimientos</label>
+    </div>
+    <button class="btn primary" type="submit" [disabled]="saving()">
+      {{ saving() ? 'Guardando…' : 'Crear producto' }}
+    </button>
+  </form>
+  @if (scannerOpen()) {
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000">
+      <div style="width:min(420px,90vw)">
+        <app-barcode-scanner (scanned)="onScanned($event)" (closed)="closeScanner()"></app-barcode-scanner>
+      </div>
+    </div>
+  }
+}
+
+<div class="table-wrap glass-panel">
+  @if (loading()) {
+    <div class="rows"><span class="spin"></span> Cargando catálogo…</div>
+  } @else if (!products().length) {
+    <div class="empty">Sin productos. Cree el primero.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th><th>Nombre</th><th>Tipo</th>
+          <th class="num">Costo</th><th class="num">Precio</th>
+          <th>Control</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of products(); track p.id) {
+          <tr>
+            <td class="mono">{{ p.sku }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ typeLabel(p.product_type) }}</td>
+            <td class="num">{{ p.purchase_cost }}</td>
+            <td class="num">{{ p.sale_price }}</td>
+            <td>
+              @if (p.track_lots) { <span class="tag">lote</span> }
+              @if (p.track_expiry) { <span class="tag">venc</span> }
+            </td>
+            <td><span [class]="'pill ' + (p.active ? 'on' : 'off')">{{ p.active ? 'Activo' : 'Inactivo' }}</span></td>
+            <td class="actions">
+              @if (canEdit()) {
+                <button class="link" (click)="toggleActive(p)">{{ p.active ? 'Desactivar' : 'Activar' }}</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

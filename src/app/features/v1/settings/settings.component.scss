@@ -1,0 +1,15 @@
+@use 'v1-ui';
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  button { padding: 8px 16px; border-radius: 9px; border: 1px solid var(--line); background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 600; }
+  button.active { background: var(--primary-500); color: #fff; border-color: transparent; }
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; @media (max-width: 900px) { grid-template-columns: 1fr; } }
+.panel h2 { margin: 0 0 10px; font-size: 15px; color: var(--text-heading); }
+.panel h2.mt { margin-top: 18px; }
+.plain { list-style: none; margin: 0 0 12px; padding: 0; font-size: 13.5px; color: var(--text-primary);
+  li { padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  small { color: var(--text-muted); }
+}
+.row { display: flex; gap: 8px; flex-wrap: wrap; input, select { padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--fill-soft); color: var(--text-primary); flex: 1; min-width: 100px; } }
+.note { color: var(--text-muted); font-size: 12.5px; }
+.mt { margin-top: 18px; }

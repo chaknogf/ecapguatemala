@@ -1,0 +1,223 @@
+<div class="head">
+  <div>
+    <h1>Movimientos de inventario</h1>
+    <p class="sub">Confirmados e inmutables — los errores se corrigen con reversos</p>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  @for (m of ['entrada','salida','ajuste','transferencia','ajuste_lote']; track m) {
+    <button role="tab" [class.active]="mode() === m" (click)="setMode($any(m))">
+      {{ m === 'entrada' ? 'Entrada' : m === 'salida' ? 'Salida' : m === 'ajuste' ? 'Ajuste' : m === 'transferencia' ? 'Transferencia' : 'Lotes' }}
+    </button>
+  }
+</div>
+
+@if (mode() === 'ajuste_lote') {
+  <form class="panel glass-panel" (ngSubmit)="applyLotStatus()">
+    <h2>Estado de lote</h2>
+    <div class="fields">
+      <label>Producto
+        <select [value]="productId()" (change)="productId.set($any($event.target).value); onProductChange()">
+          @for (p of products(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }
+        </select>
+      </label>
+      <label>Lote
+        <select [value]="targetLot()" (change)="targetLot.set($any($event.target).value)">
+          @for (l of lotOptions(); track l.id) { <option [value]="l.id">{{ l.lot_number }}</option> }
+        </select>
+      </label>
+      <label>Nuevo estado
+        <select [value]="lotStatus()" (change)="lotStatus.set($any($event.target).value)">
+          <option value="quarantine">Cuarentena</option>
+          <option value="blocked">Bloqueado (no vendible)</option>
+          <option value="active">Activo (liberar)</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn primary" type="submit" [disabled]="!targetLot()">Aplicar</button>
+  </form>
+} @else {
+  <form class="panel glass-panel" (ngSubmit)="submit()">
+    <h2>{{ mode() === 'entrada' ? 'Registrar entrada' : mode() === 'salida' ? 'Registrar salida' : mode() === 'transferencia' ? 'Transferencia entre bodegas' : 'Ajuste por conteo / corrección' }}</h2>
+    @if (mode() === 'salida') {
+      <p class="hint" role="note">Las ventas no se registran aquí. Para vender, cree un pedido en <a routerLink="/v1/sales">Ventas</a>, confírmelo y despáchelo: así quedan la factura y el cobro asociados.</p>
+    }
+
+    <div class="fields">
+      <label>Producto
+        <select [value]="productId()" (change)="productId.set($any($event.target).value); onProductChange()">
+          <option value="">— seleccione —</option>
+          @for (p of products(); track p.id) { <option [value]="p.id">{{ p.sku }} · {{ p.name }}</option> }
+        </select>
+      </label>
+
+      @if (mode() === 'entrada' || mode() === 'salida') {
+        <label>Tipo
+          <select [value]="selectedType()" (change)="selectedType.set($any($event.target).value)">
+            @for (t of types(); track t) { <option [value]="t">{{ typeLabel(t) }}</option> }
+          </select>
+        </label>
+      }
+
+      @if (mode() === 'ajuste') {
+        <label>Dirección
+          <div class="seg">
+            <button type="button" [class.on]="adjustDir() === '+'" (click)="setAdjustDir('+')">Sobra (+)</button>
+            <button type="button" [class.on]="adjustDir() === '-'" (click)="setAdjustDir('-')">Falta (−)</button>
+          </div>
+        </label>
+      }
+
+      <label>Cantidad
+        <input type="number" step="0.0001" min="0.0001" [value]="qty()" (input)="qty.set($any($event.target).value)" />
+      </label>
+
+      @if (mode() === 'entrada' || mode() === 'ajuste') {
+        <label>Costo unit. <small>(entrada)</small>
+          <input type="number" step="0.000001" min="0" [value]="unitCost()" (input)="unitCost.set($any($event.target).value)" />
+        </label>
+      }
+
+      <label>Bodega @if (mode() === 'transferencia') { (origen) }
+        <select [value]="warehouseId()" (change)="warehouseId.set($any($event.target).value)">
+          @for (w of warehouses(); track w.id) { <option [value]="w.id">{{ w.name }} ({{ w.code }})</option> }
+        </select>
+      </label>
+
+      @if (mode() === 'transferencia') {
+        <label>Bodega destino
+          <select [value]="toWarehouseId()" (change)="toWarehouseId.set($any($event.target).value)">
+            <option value="">—</option>
+            @for (w of warehouses(); track w.id) { <option [value]="w.id">{{ w.name }} ({{ w.code }})</option> }
+          </select>
+        </label>
+      }
+
+      @if (selectedProduct()?.track_lots && mode() === 'salida') {
+        <label>Lote (opcional — vacío = FEFO)
+          <select [value]="lotForOut()" (change)="lotForOut.set($any($event.target).value)">
+            <option value="">Auto FEFO</option>
+            @for (l of lotOptions(); track l.id) { <option [value]="l.id">{{ l.lot_number }}{{ l.expiry_date ? ' · ' + l.expiry_date : '' }}</option> }
+          </select>
+        </label>
+      }
+
+      @if (selectedProduct()?.track_lots && mode() === 'entrada' && !showLotForm()) {
+        <button class="link" type="button" (click)="showLotForm.set(true)">+ Crear/asociar lote</button>
+      }
+
+      @if (selectedProduct()?.track_lots && mode() === 'entrada' && showLotForm()) {
+        <label>N.º lote*
+          <input [value]="lotForm().lot_number" (input)="setLot('lot_number', $any($event.target).value)" />
+        </label>
+        <label>Vencimiento
+          <input type="date" [value]="lotForm().expiry_date" (input)="setLot('expiry_date', $any($event.target).value)" />
+        </label>
+        <label>Costo
+          <input type="number" step="0.000001" [value]="lotForm().acquisition_cost" (input)="setLot('acquisition_cost', $any($event.target).value)" />
+        </label>
+        <button class="link" type="button" (click)="createLot()">Guardar lote</button>
+      }
+
+      <label>Documento ref.
+        <input [value]="reference()" (input)="reference.set($any($event.target).value)" placeholder="OC-123 / V-456" />
+      </label>
+
+      @if (mode() === 'salida') {
+        <label>Cliente / contraparte
+          <input [value]="counterparty()" (input)="counterparty.set($any($event.target).value)" />
+        </label>
+      }
+
+      @if (mode() === 'ajuste' || mode() === 'transferencia') {
+        <label class="wide">Motivo @if (mode() === 'ajuste') { <span class="req">*</span> }
+          <input [value]="reason()" (input)="reason.set($any($event.target).value)"
+            placeholder="p. ej. Conteo físico: faltante de inventario" />
+        </label>
+      }
+    </div>
+
+    <button class="btn primary" type="submit" [disabled]="saving() || !productId()">
+      {{ saving() ? 'Registrando…' : 'Confirmar movimiento' }}
+    </button>
+  </form>
+}
+
+<div class="cols">
+  <section class="glass-panel half">
+    <h2>Últimos movimientos</h2>
+    @if (!recent().length) {
+      <p class="empty">Aún no hay movimientos.</p>
+    } @else {
+      <ul class="list">
+        @for (m of recent(); track m.id) {
+          <li>
+            <div>
+              <strong>{{ typeLabel(m.movement_type) }}</strong>
+              <small>{{ m.reference_document || m.reason || '—' }} · {{ m.occurred_at.slice(0,16).replace('T',' ') }}</small>
+            </div>
+            <div class="lines">
+              @for (l of m.lines; track l.id) {
+                <span [class]="'q ' + (isOut(l) ? 'out' : 'in')">
+                  {{ l.quantity }} @if (l.reverses_line_id) { ↩ }
+                  @if (!l.reverses_line_id) {
+                    <button class="link tiny" (click)="askReverse(l.id)">revertir</button>
+                  }
+                </span>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="glass-panel half">
+    <h2>Kardex</h2>
+    <div class="row">
+      <select [value]="kardexProduct()" (change)="kardexProduct.set($any($event.target).value); loadKardex()">
+        <option value="">— producto —</option>
+        @for (p of products(); track p.id) { <option [value]="p.id">{{ p.sku }} · {{ p.name }}</option> }
+      </select>
+      <button class="btn sm" (click)="loadKardex()" [disabled]="!kardexProduct()">Ver</button>
+    </div>
+    @if (kardex().length) {
+      <p class="kv">Apertura: <strong>{{ kardexMeta().opening }}</strong> · Final: <strong>{{ kardexMeta().final }}</strong>
+        @if (kardexMeta().reconciled) { <span class="ok">✓ conciliado</span> }</p>
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th class="num">En</th><th class="num">Sal</th><th class="num">Saldo</th></tr></thead>
+        <tbody>
+          @for (k of kardex(); track k.line_id) {
+            <tr>
+              <td>{{ k.occurred_at.slice(0,16).replace('T',' ') }}</td>
+              <td>{{ typeLabel(k.movement_type) }}</td>
+              <td class="num">{{ k.in }}</td>
+              <td class="num">{{ k.out }}</td>
+              <td class="num">{{ k.balance }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else if (kardexProduct()) {
+      <p class="empty">Sin movimientos para este producto.</p>
+    }
+  </section>
+</div>
+
+@if (reversingLine()) {
+  <div class="backdrop rev" (click)="reversingLine.set(null)">
+    <div class="modal glass-panel" (click)="$event.stopPropagation()">
+      <h3>Motivo del reverso</h3>
+      <textarea rows="3" [value]="reverseReason()" (input)="reverseReason.set($any($event.target).value)"
+        placeholder="p. ej. Digitación de cantidad duplicada"></textarea>
+      <div class="row end">
+        <button class="btn ghost" (click)="reversingLine.set(null)">Cancelar</button>
+        <button class="btn danger" (click)="confirmReverse()">Registrar reverso</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- modal de confirmación global -->
+<v1-confirm #cm />

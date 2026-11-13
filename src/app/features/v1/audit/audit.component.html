@@ -1,0 +1,39 @@
+<div class="head"><div><h1>Auditoría</h1><p class="sub">Bitácora de acciones comerciales · append-only · sin secretos</p></div></div>
+
+<div class="toolbar">
+  <input placeholder="entidad (user, stock_movement…)" [value]="filterEntity()" (input)="filterEntity.set($any($event.target).value); load()" />
+  <input placeholder="acción (auth.login, compras…)" [value]="filterAction()" (input)="filterAction.set($any($event.target).value); load()" />
+</div>
+
+<div class="table-wrap glass-panel">
+  @if (loading()) { <div class="rows"><span class="spin"></span> Cargando…</div> }
+  @else if (!events().length) { <div class="empty">Sin eventos con ese filtro.</div> }
+  @else {
+    <table>
+      <thead><tr><th>Fecha</th><th>Actor</th><th>Acción</th><th>Entidad</th><th>Documento</th><th>Resultado</th><th></th></tr></thead>
+      <tbody>
+        @for (e of events(); track e.id) {
+          <tr class="main" (click)="toggle(e.id)">
+            <td>{{ time(e) }}</td>
+            <td>{{ e.actor_email ?? 'sistema' }}</td>
+            <td class="mono">{{ e.action }}</td>
+            <td>{{ e.entity_type }}<br /><small class="mono">{{ e.entity_id }}</small></td>
+            <td>{{ e.document_ref ?? '—' }}</td>
+            <td><span [class]="'pill ' + (e.result === 'success' ? 'on' : 'off')">{{ e.result }}</span></td>
+            <td class="exp">{{ expanded() === e.id ? '▾' : '▸' }}</td>
+          </tr>
+          @if (expanded() === e.id) {
+            <tr class="detail"><td colspan="7">
+              <div class="diff">
+                <div><h4>Antes</h4><pre>{{ fmt(e.before) }}</pre></div>
+                <div><h4>Después</h4><pre>{{ fmt(e.after) }}</pre></div>
+              </div>
+              @if (e.source_ip) { <p class="ip">Origen: {{ e.source_ip }}</p> }
+            </td></tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>
+<p class="note">La protección contra secretos se aplica en el backend al escribir la bitácora (campos como password/hash/tokens se reemplazan por ***).</p>

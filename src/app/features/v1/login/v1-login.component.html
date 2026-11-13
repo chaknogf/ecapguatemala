@@ -1,0 +1,115 @@
+<div class="login">
+  <aside class="brand-panel" aria-hidden="true">
+    <div class="brand-glow"></div>
+    <a class="brand" routerLink="/">
+      <img src="https://ecapguatemala.org.gt/wp-content/uploads/2021/12/cropped-cropped-Ecap2logo-1.jpg" alt="" width="44" height="44" />
+      <span class="brand-text"><strong>ECAP</strong><small>Guatemala</small></span>
+    </a>
+
+    <div class="brand-copy">
+      <p class="eyebrow">CRM Académico</p>
+      <h2>Formación que acompaña comunidades.</h2>
+      <p>
+        Un espacio para gestionar cursos, aulas y contenidos, y para aprender al ritmo de cada persona.
+      </p>
+      <blockquote>
+        “Las memorias, las palabras y el hablar en los grupos fueron nuestras medicinas.”
+        <cite>Señora del Grupo La Rueda, Rabinal · 2003</cite>
+      </blockquote>
+    </div>
+
+    <div class="brand-foot">
+      <span>Equipo de Estudios Comunitarios y Acción Psicosocial</span>
+      <span>Guatemala · 2026</span>
+    </div>
+  </aside>
+
+  <main class="form-panel">
+    <div class="panel-tools">
+      <a class="back-link" routerLink="/">
+        <span aria-hidden="true">←</span> Volver al sitio
+      </a>
+      <button
+        type="button"
+        class="theme-toggle"
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.theme() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      >
+        {{ theme.theme() === 'dark' ? '☀' : '☾' }}
+      </button>
+    </div>
+
+    <form class="form-card" (ngSubmit)="submit()">
+      <p class="eyebrow">Acceso institucional</p>
+      <h1>Bienvenido de nuevo</h1>
+      <p class="sub">Ingresa con tu cuenta para continuar.</p>
+
+      @if (error()) {
+        <div class="alert" role="alert" aria-live="assertive">{{ error() }}</div>
+      }
+
+      <label class="field">
+        <span>Correo electrónico</span>
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          autocomplete="username"
+          inputmode="email"
+          placeholder="nombre@ecap.demo"
+          [disabled]="loading()"
+          required
+          autofocus
+        />
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <div class="pass-row">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            [disabled]="loading()"
+            required
+          />
+          <button
+            type="button"
+            class="eye"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            {{ showPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+      </label>
+
+      <button class="btn primary submit" type="submit" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner" aria-hidden="true"></span> Verificando…
+        } @else {
+          Ingresar
+        }
+      </button>
+
+      <div class="demo">
+        <div class="demo-head">
+          <span>Acceso rápido de demostración</span>
+        </div>
+        <div class="demo-grid">
+          @for (a of demoAccounts; track a.email) {
+            <button type="button" class="demo-card" (click)="quick(a.email)" [disabled]="loading()">
+              <span class="demo-role">{{ a.label }}</span>
+              <span class="demo-mail">{{ a.email }}</span>
+            </button>
+          }
+        </div>
+        <p class="hint">Contraseña demo: <code>Demo1234!</code></p>
+      </div>
+    </form>
+
+    <p class="legal">© {{ year }} ECAP Guatemala · Uso institucional</p>
+  </main>
+</div>

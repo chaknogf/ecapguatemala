@@ -1,0 +1,10 @@
+packages:
+  - '.'
+  - 'server'
+
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  '@parcel/watcher': true
+  lmdb: true
+  msgpackr-extract: true

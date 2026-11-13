@@ -1,0 +1,85 @@
+<div class="head">
+  <div>
+    <h1>Inventario</h1>
+    <p class="sub">Existencias por producto, variante, bodega y lote</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn" routerLink="/v1/low-stock">Por debajo mínimo</a>
+    <a class="btn" routerLink="/v1/expiring">Prontos a vencer</a>
+    @if (canMove()) {
+      <a class="btn primary" routerLink="/v1/movements">Registrar movimiento</a>
+    }
+  </div>
+</div>
+
+<div class="toolbar">
+  <select [value]="whFilter()" (change)="whFilter.set($any($event.target).value); load()" aria-label="Bodega">
+    <option value="">Todas las bodegas</option>
+    @for (w of warehouses(); track w.id) { <option [value]="w.id">{{ w.name }} ({{ w.code }})</option> }
+  </select>
+  <label class="check"><input type="checkbox" [checked]="onlyLow()" (change)="toggleLow()" /> Solo alertas</label>
+</div>
+
+@if (showExpiring() && expiring().length) {
+  <section class="alert-panel glass-panel">
+    <div class="row">
+      <h2>⚠ Lotes vencidos o próximos a vencer</h2>
+      <button class="link" (click)="showExpiring.set(false)">Ocultar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Lote</th><th>Producto</th><th>Vence</th><th class="num">En stock</th><th>Estado</th></tr></thead>
+        <tbody>
+          @for (e of expiring(); track e.lot_id) {
+            <tr>
+              <td class="mono">{{ e.lot_number }}</td>
+              <td>{{ e.product_name }}</td>
+              <td>{{ e.expiry_date }} <small>({{ e.days_to_expiry }}d)</small></td>
+              <td class="num">{{ e.on_hand }}</td>
+              <td><v1-light kind="expiry" [value]="e.light" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @else if (!showExpiring() && expiring().length) {
+  <button class="link show-exp" (click)="showExpiring.set(true)">
+    Mostrar alertas de vencimiento ({{ expiring().length }})
+  </button>
+}
+
+<div class="table-wrap glass-panel">
+  @if (loading()) {
+    <div class="rows"><span class="spin"></span> Cargando existencias…</div>
+  } @else if (!rows().length) {
+    <div class="empty">Sin existencias que coincidan con el filtro.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th><th>Bodega</th><th>Lote</th>
+          <th class="num">Físico</th><th class="num">Reservado</th>
+          <th class="num">Disponible</th><th class="num">Costo</th><th>Stock</th><th>Venc.</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rows(); track r.product_id + r.warehouse_id + (r.lot_id ?? '') + (r.variant_id ?? '')) {
+          <tr>
+            <td><strong>{{ r.product_name }}</strong><br /><small class="mono">{{ r.product_sku }}{{ r.variant_sku ? ' · ' + r.variant_sku : '' }}</small></td>
+            <td>{{ whName(r.warehouse_id) }}</td>
+            <td class="mono">
+              @if (r.lot_number) { {{ r.lot_number }}<br /><small>{{ r.expiry_date }}</small> } @else { — }
+            </td>
+            <td class="num">{{ r.on_hand }}</td>
+            <td class="num">{{ r.reserved }}</td>
+            <td class="num"><strong>{{ r.available }}</strong></td>
+            <td class="num">{{ r.unit_cost }}</td>
+            <td><v1-light kind="stock" [value]="r.stock_light" /></td>
+            <td>@if (r.expiry_light) { <v1-light kind="expiry" [value]="r.expiry_light" /> }</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,0 +1,98 @@
+<div class="layout" [class.nav-open]="menuOpen()">
+  <button class="scrim" type="button" aria-label="Cerrar menú" (click)="menuOpen.set(false)"></button>
+
+  <aside class="sidebar">
+    <div class="side-head">
+      <a class="brand" routerLink="/app/dashboard" (click)="menuOpen.set(false)">
+        <span class="brand-mark">EC</span>
+        <span class="brand-text">
+          <strong>ECAP</strong>
+          <small>CRM Académico</small>
+        </span>
+      </a>
+      <button class="side-close" type="button" aria-label="Cerrar menú" (click)="menuOpen.set(false)">×</button>
+    </div>
+
+    <nav class="side-nav" aria-label="Módulos">
+      <p class="nav-label">Gestión</p>
+      @for (item of items(); track item.path) {
+        @if (item.path === '/app/landing') {
+          <p class="nav-label nav-label-site">Sitio público</p>
+        }
+        <a [routerLink]="item.path" routerLinkActive="active" (click)="menuOpen.set(false)">
+          <app-nav-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="side-foot">
+      <a class="site-link" routerLink="/" target="_blank" rel="noopener">
+        <app-nav-icon name="external" />
+        <span>Ver sitio público</span>
+      </a>
+      <div class="side-user">
+        <span class="avatar">{{ initials() }}</span>
+        <span class="side-user-meta">
+          <strong>{{ user()?.full_name }}</strong>
+          <small>{{ roleLabel() }}</small>
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <button class="hamburger" type="button" (click)="menuOpen.set(true)" aria-label="Abrir menú">
+      <app-nav-icon name="menu" />
+    </button>
+
+    <div class="crumbs">
+      <span class="crumb-root">ECAP</span>
+      <span class="sep" aria-hidden="true">/</span>
+      <strong>{{ pageTitle() }}</strong>
+    </div>
+
+    <div class="tools">
+      <a class="site-link top-site" routerLink="/" target="_blank" rel="noopener">
+        <span>Ver sitio</span>
+        <app-nav-icon name="external" />
+      </a>
+      <button
+        type="button"
+        class="theme-toggle"
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.theme() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      >
+        {{ theme.theme() === 'dark' ? '☀' : '☾' }}
+      </button>
+      <div class="user-chip">
+        <span class="avatar">{{ initials() }}</span>
+        <span class="user-meta">
+          <strong>{{ user()?.full_name }}</strong>
+          <small>{{ roleLabel() }}</small>
+        </span>
+      </div>
+      <button class="logout" type="button" (click)="logout()" aria-label="Cerrar sesión">
+        <app-nav-icon name="logout" />
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navegación rápida">
+    @for (item of primaryItems(); track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active">
+        <app-nav-icon [name]="item.icon" />
+        <span>{{ item.label }}</span>
+      </a>
+    }
+    <button type="button" (click)="menuOpen.set(true)">
+      <app-nav-icon name="menu" />
+      <span>Menú</span>
+    </button>
+  </nav>
+</div>
+<v1-toasts />

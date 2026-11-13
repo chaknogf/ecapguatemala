@@ -1,0 +1,46 @@
+<section class="page">
+  <header class="head">
+    <div>
+      <h1>Productos próximos a vencer</h1>
+      <p>Lotes con fecha de vencimiento próxima o vencidos</p>
+    </div>
+    <a routerLink="/v1/stock" class="btn">Ir a Inventario</a>
+  </header>
+
+  @if (loading()) {
+    <p>Cargando...</p>
+  } @else if (items().length === 0) {
+    <div class="empty">No hay lotes próximos a vencer</div>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Producto</th>
+            <th>Lote</th>
+            <th>Vence</th>
+            <th>Días</th>
+            <th>Existencia</th>
+            <th>Estado</th>
+            <th>Semáforo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (i of items(); track i.lot_id) {
+            <tr>
+              <td>{{ i.product_sku }}</td>
+              <td>{{ i.product_name }}</td>
+              <td>{{ i.lot_number }}</td>
+              <td>{{ i.expiry_date }}</td>
+              <td class="num" [class.danger]="i.days_to_expiry <= 0" [class.warn]="i.days_to_expiry > 0 && i.days_to_expiry <= 7">{{ i.days_to_expiry }}</td>
+              <td class="num">{{ i.on_hand }}</td>
+              <td>{{ i.status }}</td>
+              <td><span class="light" [attr.data-light]="i.light">{{ i.light }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

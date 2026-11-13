@@ -1,0 +1,667 @@
+<section class="manual" #root>
+  <header class="manual-head glass-panel">
+    <div>
+      <h1>Manual de uso</h1>
+      <p class="sub">Guía para el personal de la empresa: qué hace cada pantalla, qué significa cada campo y cómo resolver los mensajes.</p>
+      <p class="meta">Sistema: Synvapp ERP · Documentación de uso: octubre 2026</p>
+    </div>
+    <div class="search">
+      <label for="manual-q">Buscar en el manual</label>
+      <div class="search-row">
+        <input #q id="manual-q" type="search" placeholder="Ej.: lote, cobrar, mínimo…"
+          [value]="query()" (input)="onSearch($any($event.target).value)" />
+        @if (query()) {
+          <button type="button" class="btn ghost" (click)="clearSearch(q)">Limpiar</button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <button type="button" class="btn ghost toc-toggle" [attr.aria-expanded]="tocOpen()" aria-controls="manual-toc"
+      (click)="tocOpen.set(!tocOpen())">
+      {{ tocOpen() ? 'Ocultar índice' : 'Ver índice del manual' }}
+    </button>
+    <nav id="manual-toc" class="toc glass-panel" [class.open]="tocOpen()" aria-label="Índice del manual">
+      @for (g of groups; track g) {
+        <p class="toc-group">{{ g }}</p>
+        <ul>
+          @for (s of sectionsIn(g); track s.id) {
+            <li><a href="#{{ s.id }}" [attr.data-toc]="s.id" (click)="go($event, s.id)">{{ s.title }}</a></li>
+          }
+        </ul>
+      }
+    </nav>
+
+    <div class="content">
+      @if (noResults()) {
+        <div class="no-results glass-panel" role="status">
+          No hay resultados para "<strong>{{ query() }}</strong>". Pruebe con otra palabra, por ejemplo «stock», «factura» o «usuario».
+        </div>
+      }
+
+      <!-- ===================== PRIMEROS PASOS ===================== -->
+
+      <article id="ingreso" data-section class="glass-panel">
+        <h2>Ingresar al sistema</h2>
+        <p>Abra la dirección de Synvapp en su navegador. Verá la pantalla de ingreso.</p>
+        <h3>Campos</h3>
+        <dl>
+          <dt>Correo electrónico</dt>
+          <dd>Su correo de usuario. Es obligatorio. Escríbalo completo y sin espacios.</dd>
+          <dt>Contraseña</dt>
+          <dd>Su contraseña. Es obligatoria. Use el botón con el ícono de ojo para mostrarla u ocultarla.</dd>
+        </dl>
+        <h3>Pasos</h3>
+        <ol>
+          <li>Escriba su correo y su contraseña.</li>
+          <li>Pulse <strong>Ingresar</strong>. Mientras se verifica, el botón dice <em>Verificando…</em>.</li>
+          <li>Si su usuario trabaja en varias empresas, verá la pantalla <strong>Elija una empresa</strong>. Pulse la empresa con la que va a trabajar. Cada empresa muestra su nombre comercial, su razón social y sus roles.</li>
+          <li>Si necesita volver a la lista de empresas, use <strong>← Volver</strong>.</li>
+        </ol>
+        <div class="tip"><strong>Si no puede ingresar:</strong> revise el correo y la contraseña. Tras 5 intentos fallidos, el acceso con ese correo se bloquea durante 15 minutos. Espere ese tiempo antes de volver a intentarlo.</div>
+        <div class="warn"><strong>Recuperar la contraseña:</strong> en la pantalla de ingreso no hay opción para restablecerla. Pida a su administrador que la cambie.</div>
+        <h3>Mensajes al ingresar</h3>
+        <ul>
+          <li><code>Ingrese correo y contraseña</code>: falta uno de los dos campos.</li>
+          <li><code>Credenciales inválidas</code>: el correo o la contraseña no coinciden.</li>
+          <li><code>No se pudo conectar con el servidor</code>: no hay comunicación con el sistema. Revise su conexión y avise al administrador si persiste.</li>
+        </ul>
+      </article>
+
+      <article id="clave" data-section class="glass-panel">
+        <h2>Cambiar contraseña</h2>
+        <p>Puede cambiar su contraseña en cualquier momento. Si su administrador le asignó una contraseña temporal, el sistema le llevará a esta pantalla al ingresar y no le dejará usar otras opciones hasta cambiarla.</p>
+        <h3>Campos</h3>
+        <dl>
+          <dt>Contraseña actual</dt>
+          <dd>La contraseña con la que ingresa hoy. Obligatoria.</dd>
+          <dt>Nueva contraseña</dt>
+          <dd>La contraseña nueva. Obligatoria. Debe tener <strong>al menos 10 caracteres</strong>, con <strong>mayúsculas</strong>, <strong>minúsculas</strong> y <strong>números</strong>. Debe ser distinta de la actual.</dd>
+          <dt>Confirmar nueva</dt>
+          <dd>Repita la contraseña nueva. Debe coincidir exactamente.</dd>
+        </dl>
+        <p>Debajo del campo verá una barra de fuerza (Muy débil, Débil, Media, Buena, Fuerte, Excelente). Es solo orientativa: la regla que se exige es la de 10 caracteres con mayúsculas, minúsculas y números.</p>
+        <h3>Botones</h3>
+        <ul>
+          <li><strong>Cambiar contraseña</strong>: guarda el cambio. Si tiene éxito, pasa al panel.</li>
+          <li><strong>Volver</strong>: regresa al panel. No aparece cuando la contraseña es temporal.</li>
+        </ul>
+        <h3>Mensajes</h3>
+        <ul>
+          <li><code>Complete los campos</code>: falta la contraseña actual o la nueva.</li>
+          <li><code>La confirmación no coincide</code>: la nueva contraseña y su repetición son distintas.</li>
+          <li>Si el sistema rechaza la nueva contraseña (por ejemplo, por no cumplir los 10 caracteres), mostrará el motivo en la misma pantalla.</li>
+        </ul>
+        <div class="tip">Después de cambiar la contraseña, el sistema puede pedirle que vuelva a ingresar en otros equipos donde tenga sesión abierta.</div>
+      </article>
+
+      <article id="interfaz" data-section class="glass-panel">
+        <h2>Partes de la pantalla</h2>
+        <dl>
+          <dt>Menú lateral (izquierda)</dt>
+          <dd>Lista los módulos a los que tiene acceso. Si un módulo no aparece, su rol no lo incluye. En pantallas pequeñas, se abre con el botón <strong>☰</strong>.</dd>
+          <dt>Barra superior</dt>
+          <dd>Muestra el <strong>nombre comercial de la empresa activa</strong>, sus roles, su nombre de usuario, las alertas de inventario, el cambio de tema y el botón <strong>Salir</strong>.</dd>
+          <dt>Alerta ⚠ con número</dt>
+          <dd>Aparece cuando hay productos por debajo del mínimo o lotes próximos a vencer. Al pulsarla va a Inventario.</dd>
+          <dt>Botón de tema (☀️ / 🌙)</dt>
+          <dd>Cambia entre tema claro y oscuro. Solo afecta a su navegador.</dd>
+          <dt>Salir</dt>
+          <dd>Cierra su sesión y lo lleva a la pantalla de ingreso.</dd>
+        </dl>
+        <div class="tip">Los números de las alertas del menú (Inventario y Por debajo del mínimo) suman los productos bajo mínimo y los lotes próximos a vencer.</div>
+      </article>
+
+      <article id="permisos" data-section class="glass-panel">
+        <h2>Permisos y roles</h2>
+        <p>Lo que ve y lo que puede hacer depende de los <strong>roles</strong> que tenga en la empresa. Si una opción no aparece o aparece el mensaje <code>Permiso requerido: …</code>, su rol no la incluye. Pida a un administrador de la empresa que revise su rol.</p>
+        <table>
+          <thead><tr><th>Rol</th><th>Qué puede hacer, en general</th></tr></thead>
+          <tbody>
+            <tr><td>Administrador de empresa</td><td>Acceso a todos los módulos de la empresa, incluidos usuarios y configuración.</td></tr>
+            <tr><td>Gerente</td><td>Consulta y opera catálogo, inventario, compras, ventas y clientes; no administra usuarios ni la configuración general.</td></tr>
+            <tr><td>Vendedor</td><td>Crea pedidos de venta y consulta inventario y clientes.</td></tr>
+            <tr><td>Cajero</td><td>Registra cobros y consulta facturas y clientes.</td></tr>
+            <tr><td>Bodeguero</td><td>Registra movimientos de inventario y gestiona lotes. No accede al módulo de Compras.</td></tr>
+            <tr><td>Despachador</td><td>Registra despachos de pedidos y consulta inventario.</td></tr>
+            <tr><td>Compras</td><td>Crea y aprueba órdenes de compra, recibe mercadería y gestiona proveedores.</td></tr>
+            <tr><td>Contador</td><td>Consulta facturas, inventario y auditoría.</td></tr>
+            <tr><td>Auditor</td><td>Consulta auditoría, kardex e inventario.</td></tr>
+            <tr><td>Consulta</td><td>Solo lectura de catálogo, inventario y panel.</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Los roles y permisos exactos los define la empresa. Esta tabla es un resumen orientativo.</p>
+      </article>
+
+      <!-- ===================== OPERACIÓN DIARIA ===================== -->
+
+      <article id="panel" data-section class="glass-panel">
+        <h2>Panel</h2>
+        <p>Es la pantalla de inicio. Resume la situación de la empresa con indicadores. Cada tarjeta puede llevarle a la pantalla relacionada.</p>
+        <h3>Selector de período</h3>
+        <p>Los botones <strong>7d</strong>, <strong>30d</strong> y <strong>90d</strong> cambian el período de las cifras de ventas, utilidad e impuestos (últimos 7, 30 o 90 días). Los indicadores de inventario no dependen del período.</p>
+        <h3>Tarjetas</h3>
+        <table>
+          <thead><tr><th>Tarjeta</th><th>Qué muestra</th><th>Va a</th></tr></thead>
+          <tbody>
+            <tr><td>Valor del inventario</td><td>Costo total de las existencias.</td><td>Inventario</td></tr>
+            <tr><td>Existencias bajas</td><td>Productos cuyo disponible está en su mínimo o por debajo.</td><td>Inventario</td></tr>
+            <tr><td>Agotados</td><td>Productos sin existencia.</td><td>Inventario</td></tr>
+            <tr><td>Lotes por vencer</td><td>Lotes dentro del período de aviso. Si hay lotes en zona crítica, lo indica debajo.</td><td>Inventario</td></tr>
+            <tr><td>Compras por recibir</td><td>Órdenes aprobadas o recibidas parcialmente.</td><td>Compras</td></tr>
+            <tr><td>Pedidos por despachar</td><td>Pedidos confirmados o despachados parcialmente.</td><td>Ventas</td></tr>
+            <tr><td>Ventas (netas)</td><td>Suma de la base de las facturas emitidas en el período, sin impuestos.</td><td>Ventas</td></tr>
+            <tr><td>Utilidad bruta estimada</td><td><strong>Estimación.</strong> Ventas netas menos el costo de todas las salidas del período (ventas, mermas, vencidos y ajustes). No es un resultado contable.</td><td>—</td></tr>
+            <tr><td>Impuestos emitidos</td><td>Suma de impuestos de las facturas del período.</td><td>—</td></tr>
+            <tr><td>Por cobrar</td><td>Saldo pendiente de facturas a crédito.</td><td>Ventas</td></tr>
+          </tbody>
+        </table>
+        <div class="warn"><strong>Importante:</strong> el panel no muestra estados financieros ni contabilidad. Las cifras de utilidad son estimaciones operativas.</div>
+        <h3>Primer ingreso de un administrador de la instalación</h3>
+        <p>Si ingresa como administrador de la instalación sin una empresa asignada, verá <strong>Bienvenida: configure su primera empresa</strong>. Complete:</p>
+        <ul>
+          <li><strong>Razón social</strong> (mínimo 3 caracteres) y <strong>Nombre comercial</strong> (mínimo 2): obligatorios.</li>
+          <li><strong>Moneda</strong> (predeterminada GTQ, 3 letras) y <strong>País</strong> (predeterminado GT, 2 letras).</li>
+          <li><strong>Zona horaria</strong> (predeterminada America/Guatemala).</li>
+        </ul>
+        <p>Pulse <strong>Crear empresa</strong>. Al terminar, pulse <strong>Entrar a la empresa →</strong>. La empresa se crea con sus roles y una bodega inicial.</p>
+      </article>
+
+      <article id="catalogo" data-section class="glass-panel">
+        <h2>Catálogo de productos</h2>
+        <p>Aquí se registran los productos que la empresa compra, almacena o vende. Muestra el número de productos, un buscador y la tabla.</p>
+        <h3>Buscador</h3>
+        <p>Escriba parte del nombre, el SKU o el código de barras. La lista se filtra mientras escribe.</p>
+        <h3>Botón + Nuevo producto</h3>
+        <p>Abre el formulario de alta. Requiere el permiso de crear productos. Pulse <strong>Cerrar</strong> para ocultarlo sin guardar.</p>
+        <h3>Campos del formulario</h3>
+        <dl>
+          <dt>SKU*</dt>
+          <dd>Código interno del producto. Obligatorio. Es el identificador que verá en inventario y compras. Debe ser único en la empresa.</dd>
+          <dt>Nombre*</dt>
+          <dd>Nombre del producto. Obligatorio.</dd>
+          <dt>Tipo</dt>
+          <dd>Terminado (predeterminado), Materia prima, Servicio, Empaque o Kit. Los servicios no tienen inventario físico.</dd>
+          <dt>Unidad</dt>
+          <dd>Unidad de medida del inventario (por ejemplo, pieza o caja). Opcional; con «—» no se asigna.</dd>
+          <dt>C. barras</dt>
+          <dd>Código de barras del producto. Opcional. Puede escribirlo o usar el botón <strong>Escanear</strong> (ver «Escanear código de barras»).</dd>
+          <dt>Precio venta</dt>
+          <dd>Precio de venta sugerido. Predeterminado 0. Se usa cuando el pedido no indica otro precio.</dd>
+          <dt>Costo</dt>
+          <dd>Costo de compra de referencia. Predeterminado 0.</dd>
+          <dt>Mínimo</dt>
+          <dd>Existencia mínima deseada. Si lo deja vacío, el producto <strong>no</strong> aparecerá en «Por debajo del mínimo».</dd>
+          <dt>Lotes</dt>
+          <dd>Marque esta casilla si el producto se controla por lote (por ejemplo, medicamentos o alimentos). Al recibir y vender pedirá o usará lotes.</dd>
+          <dt>Vencimientos</dt>
+          <dd>Marque esta casilla si el producto tiene fecha de vencimiento. Obliga a registrar la fecha en cada lote.</dd>
+        </dl>
+        <p>Pulse <strong>Crear producto</strong> para guardar. Si falta el SKU o el nombre, verá <code>SKU y nombre son obligatorios</code>.</p>
+        <h3>Tabla</h3>
+        <ul>
+          <li><strong>Control</strong>: muestra las etiquetas <em>lote</em> y <em>venc</em> si el producto las tiene.</li>
+          <li><strong>Estado</strong>: <em>Activo</em> o <em>Inactivo</em>.</li>
+          <li><strong>Activar / Desactivar</strong>: cambia el estado del producto. Un producto inactivo no se puede usar en compras ni ventas nuevas. Esta acción aparece solo con el permiso de editar productos.</li>
+        </ul>
+        <div class="warn"><strong>Limitación:</strong> en esta versión no hay pantalla para modificar los datos de un producto ya creado. Solo puede activarlo o desactivarlo.</div>
+      </article>
+
+      <article id="escaner" data-section class="glass-panel">
+        <h2>Escanear código de barras</h2>
+        <p>Desde el formulario de nuevo producto, el botón <strong>Escanear</strong> abre la cámara para leer el código de barras.</p>
+        <ol>
+          <li>Pulse <strong>Escanear</strong> junto al campo <em>C. barras</em>.</li>
+          <li>Acepte el permiso de cámara si el navegador lo pide.</li>
+          <li>Acerque el código a la cámara. Al leerlo, el código se escribe en el campo y la ventana se cierra.</li>
+          <li>Si el SKU estaba vacío, el sistema usa el mismo código como SKU; puede cambiarlo.</li>
+        </ol>
+        <p>Formatos compatibles: EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF y QR.</p>
+        <h3>Mensajes del escáner</h3>
+        <ul>
+          <li><code>Permiso de cámara denegado</code>: habilite la cámara para este sitio en la configuración del navegador.</li>
+          <li><code>No se encontró cámara</code>: el equipo no tiene cámara disponible.</li>
+          <li><code>Este navegador no soporta acceso a cámara</code>: pruebe con otro navegador.</li>
+          <li><code>No se pudo iniciar el escáner</code>: cierre y vuelva a abrirlo.</li>
+        </ul>
+        <p>Para cerrar sin leer, pulse <strong>Cerrar</strong>.</p>
+      </article>
+
+      <article id="inventario" data-section class="glass-panel">
+        <h2>Inventario</h2>
+        <p>Muestra las existencias de cada producto, por bodega y por lote. Es la pantalla para consultar cuánto hay y dónde está.</p>
+        <h3>Botones y filtros</h3>
+        <ul>
+          <li><strong>Por debajo mínimo</strong> y <strong>Prontos a vencer</strong>: abren los listados de alerta.</li>
+          <li><strong>Registrar movimiento</strong>: abre Movimientos (aparece con el permiso correspondiente).</li>
+          <li><strong>Bodega</strong>: muestra solo las existencias de una bodega. Por defecto, todas.</li>
+          <li><strong>Solo alertas</strong>: muestra solo los productos con semáforo de stock distinto de Normal.</li>
+          <li><strong>Mostrar / Ocultar alertas de vencimiento</strong>: muestra u oculta el panel superior con los lotes vencidos o próximos a vencer.</li>
+        </ul>
+        <h3>Columnas</h3>
+        <dl>
+          <dt>Producto</dt><dd>Nombre, SKU y variante si la tiene.</dd>
+          <dt>Bodega</dt><dd>Código de la bodega donde está el producto.</dd>
+          <dt>Lote</dt><dd>Número de lote y fecha de vencimiento. «—» si el producto no tiene lotes.</dd>
+          <dt>Físico</dt><dd>Cantidad que realmente hay en la bodega.</dd>
+          <dt>Reservado</dt><dd>Cantidad comprometida con pedidos confirmados que aún no se han despachado.</dd>
+          <dt>Disponible</dt><dd>Físico menos reservado. Es lo que puede vender o mover.</dd>
+          <dt>Costo</dt><dd>Costo unitario del producto en esa existencia.</dd>
+          <dt>Stock / Venc.</dt><dd>Semáforos explicados en «Estados y colores».</dd>
+        </dl>
+        <div class="tip">Un pedido confirmado reserva existencias pero no las descuenta. El descuento ocurre al despachar.</div>
+      </article>
+
+      <article id="movimientos" data-section class="glass-panel">
+        <h2>Movimientos</h2>
+        <p>Aquí se registran las entradas, salidas, ajustes, transferencias y cambios de estado de lote. Cada movimiento queda registrado y <strong>no se puede editar ni borrar</strong>. Para corregir un error, use <strong>revertir</strong>, que crea un movimiento contrario.</p>
+        <h3>Pestañas</h3>
+        <ul>
+          <li><strong>Entrada</strong>: ingresos de mercadería. Tipos: Recepción, Devolución entrante, Producción.</li>
+          <li><strong>Salida</strong>: egresos. Tipos: Devolución saliente, Consumo, Merma, Retiro vencido. <em>Las ventas no se registran aquí</em>: se hacen desde Ventas (pedido → despacho).</li>
+          <li><strong>Ajuste</strong>: corrección por conteo físico. Use <em>Sobra (+)</em> o <em>Falta (−)</em>.</li>
+          <li><strong>Transferencia</strong>: traslado de una bodega a otra.</li>
+          <li><strong>Lotes</strong>: cambia el estado de un lote (ver abajo).</li>
+        </ul>
+        <h3>Campos</h3>
+        <dl>
+          <dt>Producto</dt><dd>Obligatorio. Elija el producto del listado.</dd>
+          <dt>Tipo</dt><dd>Obligatorio en entrada y salida. Ver la lista de tipos arriba.</dd>
+          <dt>Cantidad</dt><dd>Obligatoria. Mayor que cero. Si es cero o negativa, verá <code>Cantidad inválida</code>.</dd>
+          <dt>Costo unit.</dt><dd>En entradas y ajustes. Opcional.</dd>
+          <dt>Bodega</dt><dd>Obligatoria. En transferencia es la bodega de origen.</dd>
+          <dt>Bodega destino</dt><dd>Obligatoria en transferencias. Debe ser distinta de la de origen.</dd>
+          <dt>Lote</dt><dd>Solo en salidas de productos con lote. «Auto FEFO» (predeterminado) elige automáticamente el lote que vence primero. Si elige un lote, el sistema usa ese.</dd>
+          <dt>Documento ref.</dt><dd>Referencia opcional, por ejemplo un número de orden o de factura.</dd>
+          <dt>Cliente / contraparte</dt><dd>Opcional, en salidas.</dd>
+          <dt>Motivo</dt><dd>Obligatorio en ajustes (<code>El ajuste exige un motivo</code>). Recomendado en todos los casos.</dd>
+        </dl>
+        <h3>Pasos para registrar una entrada</h3>
+        <ol>
+          <li>Pestaña <strong>Entrada</strong>.</li>
+          <li>Elija producto, tipo, cantidad y bodega.</li>
+          <li>Si el producto tiene lotes, pulse <strong>+ Crear/asociar lote</strong>, escriba el número de lote, la fecha de vencimiento si aplica y pulse <strong>Guardar lote</strong>.</li>
+          <li>Pulse <strong>Confirmar movimiento</strong>. Verá <em>Movimiento registrado</em>.</li>
+        </ol>
+        <h3>Pasos para un ajuste</h3>
+        <ol>
+          <li>Pestaña <strong>Ajuste</strong>, elija producto, bodega y cantidad.</li>
+          <li>Elija <em>Sobra (+)</em> o <em>Falta (−)</em>.</li>
+          <li>Escriba el motivo (por ejemplo, «Conteo físico: faltante»).</li>
+          <li>Pulse <strong>Confirmar movimiento</strong> y luego <strong>Confirmar ajuste</strong> en la ventana de advertencia. El ajuste queda auditado.</li>
+        </ol>
+        <h3>Pasos para una transferencia</h3>
+        <ol>
+          <li>Pestaña <strong>Transferencia</strong>.</li>
+          <li>Elija producto, cantidad, bodega de origen y bodega destino (distinta).</li>
+          <li>Pulse <strong>Confirmar movimiento</strong>. Verá <em>Transferencia registrada</em>.</li>
+        </ol>
+        <h3>Pasos para revertir un movimiento</h3>
+        <ol>
+          <li>En el panel <strong>Últimos movimientos</strong>, pulse <strong>revertir</strong> en la línea que quiere corregir.</li>
+          <li>Confirme en la ventana de advertencia.</li>
+          <li>Escriba el motivo (mínimo 3 caracteres) y pulse <strong>Registrar reverso</strong>. Verá <em>Reverso registrado</em>.</li>
+        </ol>
+        <p>Un movimiento que ya es un reverso, o que ya fue revertido, no se puede revertir de nuevo.</p>
+        <div class="warn"><strong>No se revierten aquí:</strong> las líneas de una recepción de compra (anúlela desde Compras, con el botón <em>Anular recepción</em>) y las líneas de un despacho de venta (el sistema lo impide para no dejar el pedido inconsistente).</div>
+        <h3>Estado de lote (pestaña Lotes)</h3>
+        <ul>
+          <li><strong>Cuarentena</strong> o <strong>Bloqueado (no vendible)</strong>: el lote no se puede vender ni despachar.</li>
+          <li><strong>Activo (liberar)</strong>: vuelve a permitir su uso.</li>
+        </ul>
+        <h3>Kardex</h3>
+        <p>Elija un producto y pulse <strong>Ver</strong> para ver su historial: saldo inicial, cada entrada y salida con su saldo, y saldo final. Si aparece <em>✓ conciliado</em>, el saldo coincide con el inventario.</p>
+        <div class="warn"><strong>Advertencia:</strong> todos los movimientos afectan el inventario real. Revise producto, cantidad y bodega antes de confirmar.</div>
+      </article>
+
+      <!-- ===================== ALERTAS ===================== -->
+
+      <article id="minimo" data-section class="glass-panel">
+        <h2>Por debajo del mínimo</h2>
+        <p>Lista los productos cuyo disponible está en su mínimo o por debajo. Sirve para decidir qué pedir a los proveedores.</p>
+        <ul>
+          <li>Columnas: SKU, producto, almacén, existencia, reservado, disponible, costo unitario y semáforo.</li>
+          <li>El semáforo indica el estado (ver «Estados y colores»).</li>
+          <li><strong>Ir a Compras</strong>: abre el módulo de compras para crear la orden.</li>
+        </ul>
+        <div class="tip"><strong>Flujo sugerido:</strong> revise la lista, anote las cantidades a reponer, vaya a <em>Compras → + Nueva orden</em> y seleccione el proveedor y los productos.</div>
+        <div class="warn"><strong>Limitación:</strong> la columna «Almacén» muestra un código técnico, no el nombre de la bodega. Si la pantalla queda en «Cargando…» sin terminar, recargue la página.</div>
+      </article>
+
+      <article id="vencer" data-section class="glass-panel">
+        <h2>Prontos a vencer</h2>
+        <p>Lista los lotes con fecha de vencimiento cercana o ya vencidos.</p>
+        <ul>
+          <li>Columnas: SKU, producto, lote, fecha de vencimiento, días para vencer, existencia, estado y semáforo.</li>
+          <li><strong>Días</strong>: cero o negativo significa vencido (se muestra en rojo). De 1 a 7 días se muestra en amarillo.</li>
+          <li><strong>Ir a Inventario</strong>: vuelve al inventario completo.</li>
+        </ul>
+        <p>Los lotes vencidos deben retirarse con un movimiento de salida tipo <em>Retiro vencido</em> o según la política de la empresa.</p>
+        <div class="warn"><strong>Limitación:</strong> las columnas «Estado» y «Semáforo» muestran códigos en inglés (por ejemplo, <code>active</code>, <code>red</code>). Las equivalencias están en «Estados y colores». Si la pantalla queda en «Cargando…», recargue la página.</div>
+      </article>
+
+      <!-- ===================== COMPRAS Y VENTAS ===================== -->
+
+      <article id="compras" data-section class="glass-panel">
+        <h2>Compras</h2>
+        <p>Gestiona las órdenes de compra a proveedores. <strong>El inventario solo cambia cuando se registra la recepción</strong>, no al crear la orden.</p>
+        <h3>Flujo</h3>
+        <ol>
+          <li><strong>Crear la orden</strong> (+ Nueva orden): quedará en <em>draft</em> (borrador).</li>
+          <li><strong>Aprobar</strong>: solo para órdenes en borrador, con el permiso de aprobación.</li>
+          <li><strong>Recibir</strong>: registre lo que llegó. Puede recibir en varias veces (la orden pasa a <em>partial</em>) hasta completarla (<em>received</em>).</li>
+        </ol>
+        <h3>Crear una orden</h3>
+        <dl>
+          <dt>Proveedor*</dt><dd>Obligatorio. Solo puede elegir proveedores ya registrados en el sistema.</dd>
+          <dt>Bodega destino*</dt><dd>Obligatoria. Dónde entrará la mercadería.</dd>
+          <dt>Producto, cant., costo</dt><dd>Cada línea necesita producto y cantidad mayor que cero. El costo es opcional. Use <strong>+ Agregar línea</strong> para más productos y <strong>✕</strong> para quitar una.</dd>
+        </dl>
+        <p>Pulse <strong>Crear orden (borrador)</strong>. Verá <em>Orden OC-… creada</em>. Si falta proveedor o bodega, verá <code>Seleccione proveedor y bodega</code>; si no hay líneas válidas, <code>Agregue al menos una línea válida</code>.</p>
+        <h3>Filtros</h3>
+        <p>Todas, Borrador, Aprobadas, Parciales y Recibidas. Las órdenes en estado <em>cancelled</em> o <em>pending_approval</em> no tienen filtro propio.</p>
+        <h3>Acciones por fila</h3>
+        <ul>
+          <li><strong>Ver</strong>: abre el detalle con cantidades pedidas, recibidas, costos, totales y recepciones.</li>
+          <li><strong>Aprobar</strong>: aparece en órdenes en borrador.</li>
+          <li><strong>Recibir</strong>: aparece en órdenes aprobadas o parciales.</li>
+        </ul>
+        <h3>Recibir mercadería</h3>
+        <ol>
+          <li>En la ventana <strong>Recibir</strong>, revise la cantidad propuesta (la pendiente) y ajústela a lo que realmente llegó.</li>
+          <li>Si el producto tiene lotes, escriba el <strong>N.º lote</strong> y la <strong>fecha de vencimiento</strong>.</li>
+          <li>Opcional: escriba la <strong>Factura proveedor</strong>.</li>
+          <li>Pulse <strong>Confirmar recepción</strong>. Verá <em>Recepción OC-… registrada</em>.</li>
+        </ol>
+        <div class="warn"><strong>Advertencia:</strong> no puede recibir más de lo pendiente en la orden. Si lo intenta, el sistema rechazará la operación con su motivo.</div>
+        <h3>Cancelar una orden</h3>
+        <p>Puede cancelar una orden en borrador o aprobada, mientras no tenga recepciones. Pulse <strong>Ver</strong>, luego <strong>Cancelar orden</strong>, escriba el motivo y confirme. La orden queda en el historial.</p>
+        <h3>Anular una recepción</h3>
+        <ol>
+          <li>Pulse <strong>Ver</strong> en la orden y revise la sección <em>Recepciones</em>.</li>
+          <li>Pulse <strong>Anular recepción</strong>, escriba el motivo y confirme.</li>
+          <li>El sistema retira la mercadería del inventario y devuelve esas cantidades a pendientes en la orden. Si esa mercadería ya se vendió o consumió, la anulación no se permitirá.</li>
+        </ol>
+        <div class="tip">Anular recepciones requiere permiso de ajustes de inventario (administrador o gerente). Una vez anulada la recepción, la orden puede cancelarse si ya no tiene recepciones.</div>
+      </article>
+
+      <article id="ventas" data-section class="glass-panel">
+        <h2>Ventas</h2>
+        <p>Gestiona pedidos de clientes, despachos, facturas y cobros. Pestañas: <strong>Pedidos</strong> y <strong>Facturas y saldos</strong>.</p>
+        <h3>Flujo</h3>
+        <ol>
+          <li><strong>Crear pedido</strong> (+ Nuevo pedido): queda en <em>draft</em>.</li>
+          <li><strong>Confirmar</strong>: reserva las existencias (con preferencia por los lotes que vencen primero).</li>
+          <li><strong>Despachar</strong>: descuenta el inventario físico. Puede hacerse en varias entregas.</li>
+          <li><strong>Facturar</strong>: emite la factura comercial del pedido despachado.</li>
+          <li><strong>Cobrar</strong>: registra el pago de facturas a crédito, total o parcial.</li>
+        </ol>
+        <h3>Crear un pedido</h3>
+        <dl>
+          <dt>Cliente*</dt><dd>Obligatorio. Solo clientes registrados.</dd>
+          <dt>Bodega*</dt><dd>Obligatoria. De dónde saldrá la mercadería.</dd>
+          <dt>Producto</dt><dd>Obligatorio por línea. Muestra el precio de venta del catálogo.</dd>
+          <dt>Cant.</dt><dd>Mayor que cero.</dd>
+          <dt>Precio</dt><dd>Opcional. Si lo deja vacío o en 0, se usa el precio de venta del catálogo.</dd>
+          <dt>Desc. %</dt><dd>Descuento de la línea. Predeterminado 0. No puede superar el descuento máximo autorizado al cliente.</dd>
+          <dt>IVA %</dt><dd>Porcentaje de impuesto de la línea. Si lo deja vacío, la línea no lleva impuesto.</dd>
+        </dl>
+        <p>Pulse <strong>Crear pedido</strong>. Verá <em>Pedido PED-… creado</em>.</p>
+        <h3>Estados del pedido</h3>
+        <p>Se muestran en inglés en la tabla: <em>draft</em> (borrador), <em>confirmed</em> (confirmado), <em>partial</em> (despacho parcial), <em>dispatched</em> (despachado), <em>invoiced</em> (facturado), <em>cancelled</em> (cancelado).</p>
+        <h3>Despachar</h3>
+        <p>La ventana muestra cada línea con lo pendiente. Ajuste la cantidad a entregar (por defecto, lo pendiente) y pulse <strong>Confirmar despacho</strong>. Verá <em>Despacho SUC-… registrado</em>.</p>
+        <h3>Facturar</h3>
+        <ul>
+          <li><strong>Venta de contado (pago en caja)</strong>: márquela si el cliente paga al momento. Si no la marca, la factura es a crédito.</li>
+          <li>La factura congela el cliente, los precios y los impuestos del momento. Cambios posteriores en el catálogo no la modifican.</li>
+          <li>Es una <strong>factura comercial interna, no una factura fiscal electrónica (FEL)</strong>.</li>
+        </ul>
+        <h3>Cobrar</h3>
+        <ul>
+          <li><strong>Monto</strong>: aparece con el saldo pendiente. Puede cobrar una parte. El sistema rechaza montos mayores al saldo.</li>
+          <li><strong>Método</strong>: forma de pago configurada en la empresa.</li>
+          <li>Pulse <strong>Registrar cobro</strong>. Verá <em>Pago registrado</em>.</li>
+        </ul>
+        <div class="warn"><strong>Limitación:</strong> las facturas de contado no admiten cobro en esta versión, porque el módulo de caja aún no existe.</div>
+        <h3>Facturas y saldos</h3>
+        <ul>
+          <li><strong>Cuentas por cobrar</strong>: facturas con saldo. Muestra días vencida y el tramo (1-30, 31-60, 61-90, 90+). El botón <strong>Cobrar</strong> abre el cobro.</li>
+          <li><strong>Facturas emitidas</strong>: número, cliente, vencimiento, base, IVA, total y tipo (<em>Contado</em> o <em>Crédito</em>).</li>
+        </ul>
+        <h3>Cancelar un pedido</h3>
+        <p>Un pedido en borrador o confirmado puede cancelarse con motivo. Al cancelarlo, las existencias reservadas vuelven a estar disponibles. Un pedido con despachos ya no puede cancelarse.</p>
+        <h3>Facturar por entregas</h3>
+        <p>Si despacha un pedido en partes, la factura cubre solo lo despachado y todavía no facturado. El pedido muestra el progreso, por ejemplo <em>Despachado 4/10 · Facturado 4/10</em>. Cuando despacha el resto, puede facturarlo: el botón aparece <em>Facturar entregado</em> mientras el pedido está parcial. El pedido pasa a <em>facturado</em> cuando todo está despachado y facturado.</p>
+        <h3>Anular una factura</h3>
+        <ol>
+          <li>En <strong>Facturas y saldos</strong>, pulse <strong>Anular</strong> en la factura.</li>
+          <li>Escriba el motivo y confirme: el sistema emite una <strong>nota de crédito</strong> por el total.</li>
+          <li>La factura queda marcada como <em>Anulada</em> y deja de aparecer en cuentas por cobrar. Si el pedido estaba facturado parcialmente, vuelve a poder facturarse lo que falte.</li>
+        </ol>
+        <div class="warn"><strong>Importante:</strong> la anulación no devuelve mercadería al inventario. Si el cliente devuelve producto, regístrelo en Movimientos como <em>Devolución entrante</em>. Una factura con cobros registrados no puede anularse en esta versión.</div>
+        <div class="tip">Anular facturas requiere permiso de facturación (administrador o gerente).</div>
+      </article>
+
+      <article id="clientes" data-section class="glass-panel">
+        <h2>Clientes</h2>
+        <p>Registro de clientes con condiciones comerciales. Se usa en pedidos, facturas y cobros.</p>
+        <h3>Campos del formulario</h3>
+        <dl>
+          <dt>Código*</dt><dd>Obligatorio. Identificador interno del cliente.</dd>
+          <dt>Nombre / razón social*</dt><dd>Obligatorio.</dd>
+          <dt>Tipo</dt><dd>Individual (predeterminado) o Empresa.</dd>
+          <dt>Identificación fiscal</dt><dd>NIT u otro número de identificación. Opcional.</dd>
+          <dt>Correo</dt><dd>Opcional. Se guarda tal cual lo escribe.</dd>
+          <dt>Teléfono</dt><dd>Opcional.</dd>
+          <dt>Límite de crédito</dt><dd>Opcional. Si lo deja vacío, no hay límite. Si está definido, un pedido o factura a crédito que supere el límite se rechaza.</dd>
+          <dt>Descuento máx. %</dt><dd>Descuento máximo que puede recibir el cliente en sus líneas. Predeterminado 0.</dd>
+          <dt>Plazo días</dt><dd>Días para pagar las facturas a crédito. Predeterminado 0.</dd>
+        </dl>
+        <p>Pulse <strong>Crear cliente</strong>. Si falta código o nombre, verá <code>Código y nombre son obligatorios</code>.</p>
+        <h3>Tabla y búsqueda</h3>
+        <ul>
+          <li>El buscador filtra por nombre, código u otros datos del cliente.</li>
+          <li>Columnas: código, nombre, tipo, identificación fiscal, límite, descuento máximo y estado (<em>active</em>, <em>inactive</em>, <em>blocked</em>).</li>
+          <li>Un cliente <em>blocked</em> no puede recibir pedidos nuevos.</li>
+        </ul>
+        <div class="warn"><strong>Limitación:</strong> en esta versión no se pueden editar ni desactivar clientes desde la pantalla. Pida el cambio a un administrador.</div>
+      </article>
+
+      <!-- ===================== ADMINISTRACIÓN ===================== -->
+
+      <article id="usuarios" data-section class="glass-panel">
+        <h2>Usuarios y roles</h2>
+        <p>Solo para quienes tienen el permiso de administrar usuarios.</p>
+        <h3>Crear usuario</h3>
+        <ol>
+          <li>Pulse <strong>+ Nuevo usuario</strong>.</li>
+          <li>Complete <strong>Correo*</strong>, <strong>Nombre*</strong> y <strong>Contraseña*</strong> (mínimo 10 caracteres).</li>
+          <li>Marque los roles que corresponden. Puede marcar varios.</li>
+          <li>Pulse <strong>Guardar</strong>.</li>
+        </ol>
+        <p>Si el usuario aparece con la nota «cambiará clave al ingresar», deberá cambiar su contraseña al ingresar por primera vez.</p>
+        <h3>Editar usuario</h3>
+        <p>Pulse <strong>Editar</strong>. El correo no se puede cambiar. Puede cambiar nombre, roles o asignar una nueva contraseña (opcional).</p>
+        <h3>Activar y desactivar</h3>
+        <p><strong>Desactivar</strong> impide que el usuario ingrese. Pide confirmación. Se puede reactivar con <strong>Activar</strong>.</p>
+        <div class="warn"><strong>Importante:</strong> al cambiar la contraseña de un usuario desde esta pantalla, sus sesiones abiertas no se cierran automáticamente.</div>
+        <h3>Búsqueda y tabla</h3>
+        <p>Busque por nombre o correo. La tabla muestra nombre, correo, roles, estado y acciones. La etiqueta <em>plataforma</em> indica un administrador de la instalación.</p>
+      </article>
+
+      <article id="configuracion" data-section class="glass-panel">
+        <h2>Configuración</h2>
+        <p>Solo para quienes tienen el permiso de configuración de empresa. Tiene tres pestañas.</p>
+        <h3>Empresa y políticas</h3>
+        <dl>
+          <dt>Nombre comercial, Ident. fiscal, Dirección, Teléfono, Correo</dt><dd>Datos que aparecen en la empresa. Opcionales salvo el nombre comercial.</dd>
+          <dt>Moneda</dt><dd>Código de tres letras (por ejemplo, GTQ). Se convierte a mayúsculas.</dd>
+          <dt>Zona horaria</dt><dd>Zona horaria de la empresa.</dd>
+          <dt>Costeo del inventario</dt><dd>Promedio ponderado. Es el único método disponible en la interfaz: cada entrada recalcula el costo promedio del producto en la bodega.</dd>
+          <dt>Permitir stock negativo</dt><dd>Desmarcado por defecto. Riesgoso: permite registrar salidas sin existencia suficiente.</dd>
+          <dt>Bloquear venta de lotes vencidos</dt><dd>Marcado por defecto. Evita vender lotes con fecha vencida.</dd>
+          <dt>Aviso amarillo / Alerta roja (días)</dt><dd>Días antes del vencimiento para mostrar el semáforo amarillo y el rojo. Valores de 1 a 3650. Si no se configuran, el sistema usa 90 y 30 días. La alerta roja debe ser menor que el aviso amarillo.</dd>
+        </dl>
+        <p>Pulse <strong>Guardar cambios</strong>.</p>
+        <h3>Sucursales y bodegas</h3>
+        <ul>
+          <li>Cree una sucursal con código y nombre. Cada sucursal nueva genera automáticamente la bodega <em>ALM-01</em>.</li>
+          <li>Cree bodegas dentro de una sucursal con código y nombre. La etiqueta <em>neg. ok</em> indica que la bodega admite stock negativo.</li>
+        </ul>
+        <h3>Maestros</h3>
+        <p>Muestra las listas de unidades, impuestos, categorías, marcas y atributos. En esta versión solo son de consulta desde esta pantalla.</p>
+      </article>
+
+      <article id="auditoria" data-section class="glass-panel">
+        <h2>Auditoría</h2>
+        <p>Registro de las acciones importantes realizadas en el sistema: ingresos, movimientos, compras, ventas, cobros y cambios de configuración. Los registros no se pueden modificar.</p>
+        <h3>Filtros</h3>
+        <ul>
+          <li><strong>Entidad</strong>: tipo de objeto afectado (por ejemplo, <em>user</em>, <em>stock_movement</em>).</li>
+          <li><strong>Acción</strong>: tipo de acción (por ejemplo, <em>auth.login</em> o un texto parte de la acción, como «compras»).</li>
+        </ul>
+        <h3>Tabla</h3>
+        <p>Columnas: fecha, actor (quién hizo la acción), acción, entidad, documento, resultado. Pulse una fila para ver los valores <strong>Antes</strong> y <strong>Después</strong>, y el origen cuando esté registrado.</p>
+        <div class="tip">La auditoría oculta automáticamente las contraseñas y los datos secretos.</div>
+      </article>
+
+      <!-- ===================== REFERENCIA ===================== -->
+
+      <article id="estados" data-section class="glass-panel">
+        <h2>Estados y colores</h2>
+        <h3>Semáforo de stock (Inventario y Por debajo del mínimo)</h3>
+        <table>
+          <thead><tr><th>Etiqueta</th><th>Significado</th></tr></thead>
+          <tbody>
+            <tr><td>Normal</td><td>Existencia correcta.</td></tr>
+            <tr><td>Baja</td><td>La existencia física está en el mínimo o por debajo.</td></tr>
+            <tr><td>Mínimo</td><td>El disponible está en el mínimo o por debajo.</td></tr>
+            <tr><td>Reponer</td><td>El disponible está en el punto de reposición (por encima del mínimo).</td></tr>
+            <tr><td>Agotado</td><td>No hay existencia.</td></tr>
+            <tr><td>Negativo</td><td>La existencia es menor que cero. Revise de inmediato.</td></tr>
+            <tr><td>Sobre-stock</td><td>La existencia supera el máximo definido.</td></tr>
+          </tbody>
+        </table>
+        <h3>Semáforo de vencimiento</h3>
+        <table>
+          <thead><tr><th>Etiqueta</th><th>Significado</th></tr></thead>
+          <tbody>
+            <tr><td>Vigente</td><td>Lejos de vencer.</td></tr>
+            <tr><td>Próximo</td><td>Dentro del aviso amarillo.</td></tr>
+            <tr><td>Crítico</td><td>Dentro de la alerta roja.</td></tr>
+            <tr><td>Sin venc.</td><td>El lote no tiene fecha de vencimiento.</td></tr>
+            <tr><td>Vencido</td><td>La fecha ya pasó.</td></tr>
+          </tbody>
+        </table>
+        <h3>Estado de pedidos y órdenes</h3>
+        <table>
+          <thead><tr><th>Lo que ve en pantalla</th><th>Significado</th></tr></thead>
+          <tbody>
+            <tr><td>draft</td><td>Borrador (todavía no confirmado o aprobado).</td></tr>
+            <tr><td>approved</td><td>Orden de compra aprobada, pendiente de recibir.</td></tr>
+            <tr><td>partial</td><td>Recibida o despachada parcialmente.</td></tr>
+            <tr><td>received</td><td>Orden de compra recibida completa.</td></tr>
+            <tr><td>confirmed</td><td>Pedido confirmado con reserva de existencias.</td></tr>
+            <tr><td>dispatched</td><td>Pedido despachado completo.</td></tr>
+            <tr><td>invoiced</td><td>Pedido facturado.</td></tr>
+            <tr><td>cancelled</td><td>Cancelado.</td></tr>
+          </tbody>
+        </table>
+        <h3>Estado de clientes</h3>
+        <p><em>active</em> (activo), <em>inactive</em> (inactivo), <em>blocked</em> (bloqueado: no admite pedidos nuevos).</p>
+        <h3>Estado de lotes</h3>
+        <p><em>active</em> (disponible), <em>quarantine</em> (cuarentena), <em>blocked</em> (bloqueado), <em>expired</em> (vencido), <em>depleted</em> (agotado).</p>
+      </article>
+
+      <article id="errores" data-section class="glass-panel">
+        <h2>Mensajes y solución de problemas</h2>
+        <table>
+          <thead><tr><th>Mensaje</th><th>Qué significa</th><th>Qué hacer</th></tr></thead>
+          <tbody>
+            <tr><td><code>Ingrese correo y contraseña</code></td><td>Falta un dato al ingresar.</td><td>Complete ambos campos.</td></tr>
+            <tr><td><code>Credenciales inválidas</code></td><td>Correo o contraseña incorrectos.</td><td>Revise los datos. Si olvidó la contraseña, pida ayuda al administrador.</td></tr>
+            <tr><td>Bloqueo temporal de ingreso</td><td>Hubo 5 intentos fallidos.</td><td>Espere 15 minutos.</td></tr>
+            <tr><td><code>Permiso requerido: …</code></td><td>Su rol no permite esa acción.</td><td>Pida al administrador que revise su rol.</td></tr>
+            <tr><td><code>Debe cambiar la contraseña temporal antes de continuar</code></td><td>Su contraseña es temporal.</td><td>Cámbiela en la pantalla de cambio de contraseña.</td></tr>
+            <tr><td><code>La sesión no tiene empresa activa</code></td><td>Su sesión no tiene una empresa seleccionada.</td><td>Cierre sesión e ingrese de nuevo. Si persiste, avise al administrador.</td></tr>
+            <tr><td><code>El token de acceso expiró</code> / sesión caducada</td><td>Pasó el tiempo de la sesión.</td><td>Vuelva a ingresar.</td></tr>
+            <tr><td><code>Sin conexión con el servidor</code> / <code>No hay conexión con el servidor</code></td><td>El navegador no llega al sistema.</td><td>Revise su red. Si el problema continúa, avise al administrador.</td></tr>
+            <tr><td><code>Cantidad inválida</code></td><td>La cantidad es cero o negativa.</td><td>Escriba una cantidad mayor que cero.</td></tr>
+            <tr><td><code>Seleccione un producto</code> / <code>Seleccione la bodega</code></td><td>Falta un dato obligatorio.</td><td>Complete el campo indicado.</td></tr>
+            <tr><td><code>El ajuste exige un motivo</code></td><td>Los ajustes requieren una justificación.</td><td>Escriba el motivo y repita la acción.</td></tr>
+            <tr><td><code>Elija bodegas de origen y destino distintas</code></td><td>En una transferencia ambas bodegas son iguales.</td><td>Cambie la bodega destino.</td></tr>
+            <tr><td><code>El reverso exige un motivo (mín. 3 caracteres)</code></td><td>Falta el motivo del reverso.</td><td>Escriba al menos 3 caracteres.</td></tr>
+            <tr><td><code>Seleccione cliente y bodega</code> / <code>Agregue líneas válidas</code></td><td>Faltan datos del pedido.</td><td>Complete cliente, bodega y al menos una línea con producto y cantidad.</td></tr>
+            <tr><td><code>Indique monto y método</code></td><td>Falta el monto o la forma de pago al cobrar.</td><td>Complete ambos campos.</td></tr>
+            <tr><td>El cobro es rechazado</td><td>El monto supera el saldo o la factura es de contado.</td><td>Corrija el monto. Las facturas de contado no admiten cobro en esta versión.</td></tr>
+            <tr><td>La factura a crédito es rechazada</td><td>Supera el límite de crédito del cliente.</td><td>Reduzca el monto o pida al administrador ajustar el límite.</td></tr>
+            <tr><td>El movimiento es rechazado por lote</td><td>El lote está en cuarentena, bloqueado o vencido.</td><td>Use otro lote o revise el estado del lote en la pestaña Lotes.</td></tr>
+            <tr><td>El movimiento es rechazado por stock</td><td>No hay existencia disponible suficiente.</td><td>Revise el disponible en Inventario. Recuerde que lo reservado no se puede usar.</td></tr>
+            <tr><td><code>Indique cantidades recibidas</code></td><td>No se indicó ninguna cantidad al recibir.</td><td>Escriba al menos una cantidad mayor que cero.</td></tr>
+            <tr><td><code>Código y nombre son obligatorios</code> / <code>SKU y nombre son obligatorios</code></td><td>Faltan campos obligatorios.</td><td>Complete los campos marcados con asterisco.</td></tr>
+            <tr><td>Un registro es rechazado por duplicado</td><td>Ya existe un lote con ese número para el mismo producto (o el código ya está en uso).</td><td>Use otro número o código, o busque el registro existente.</td></tr>
+          </tbody>
+        </table>
+        <h3>Cuándo avisar al administrador</h3>
+        <ul>
+          <li>No puede ingresar y no es un problema de contraseña.</li>
+          <li>Tiene un permiso que debería tener.</li>
+          <li>Ve un error que no está en esta lista y se repite.</li>
+          <li>Un registro necesita corregirse y la pantalla no lo permite (por ejemplo, editar un producto o cancelar un pedido).</li>
+        </ul>
+      </article>
+
+      <article id="glosario" data-section class="glass-panel">
+        <h2>Glosario</h2>
+        <dl>
+          <dt>SKU</dt><dd>Código interno único de un producto.</dd>
+          <dt>Existencia física (Físico)</dt><dd>Cantidad que hay realmente en la bodega.</dd>
+          <dt>Reservado</dt><dd>Cantidad comprometida con pedidos confirmados y no despachados.</dd>
+          <dt>Disponible</dt><dd>Existencia física menos reservado. Lo que puede usar.</dd>
+          <dt>Mínimo</dt><dd>Existencia mínima que quiere mantener para un producto.</dd>
+          <dt>Bodega</dt><dd>Lugar físico o lógico donde se guarda el inventario.</dd>
+          <dt>Sucursal</dt><dd>Establecimiento de la empresa. Cada sucursal tiene al menos una bodega.</dd>
+          <dt>Lote</dt><dd>Grupo de unidades de un producto que se fabricaron o recibieron juntas, con un número propio y, si aplica, una fecha de vencimiento.</dd>
+          <dt>FEFO («primero en vencer, primero en salir»)</dt><dd>Criterio por el que se usan primero los lotes con fecha de vencimiento más cercana.</dd>
+          <dt>Kardex</dt><dd>Historial de entradas y salidas de un producto con su saldo.</dd>
+          <dt>Movimiento</dt><dd>Registro de una entrada, salida, ajuste o transferencia de inventario.</dd>
+          <dt>Reverso</dt><dd>Movimiento contrario que corrige otro sin borrarlo.</dd>
+          <dt>Ajuste</dt><dd>Corrección de la existencia tras un conteo físico.</dd>
+          <dt>Orden de compra (OC)</dt><dd>Pedido formal a un proveedor.</dd>
+          <dt>Recepción</dt><dd>Registro de la mercadería que llegó de una orden de compra.</dd>
+          <dt>Pedido (de venta)</dt><dd>Solicitud de un cliente. Reserva existencias al confirmarse.</dd>
+          <dt>Despacho</dt><dd>Entrega de mercadería al cliente. Descuenta el inventario.</dd>
+          <dt>Factura comercial</dt><dd>Documento que registra la venta con cliente, precios e impuestos. En esta versión no es una factura fiscal electrónica.</dd>
+          <dt>Contado / Crédito</dt><dd>Contado: el cliente paga al momento. Crédito: se cobra después, según el plazo del cliente.</dd>
+          <dt>Cuentas por cobrar</dt><dd>Saldo pendiente de los clientes por facturas a crédito.</dd>
+          <dt>Cobro</dt><dd>Pago recibido de un cliente para una factura. Puede ser parcial.</dd>
+          <dt>Semáforo</dt><dd>Indicador de color que resume el estado de stock o de vencimiento.</dd>
+          <dt>Rol y permiso</dt><dd>Un rol agrupa permisos. Un permiso define qué acción puede hacer un usuario.</dd>
+          <dt>Auditoría</dt><dd>Historial de acciones registradas en el sistema.</dd>
+        </dl>
+      </article>
+
+      <article id="limites" data-section class="glass-panel">
+        <h2>Limitaciones conocidas</h2>
+        <p>Estas funciones no están disponibles en la versión actual. No se describen como procesos disponibles:</p>
+        <ul>
+          <li>Editar productos y clientes ya creados (solo activar o desactivar productos).</li>
+          <li>Cerrar un pedido con faltante: lo no despachado debe despacharse; no hay cierre con cantidad menor a la pedida.</li>
+          <li>Anular facturas con cobros registrados, y devolver cobros.</li>
+          <li>Devoluciones de venta: los despachos no pueden revertirse desde Movimientos.</li>
+          <li>Caja (cobros al contado y arqueos), contabilidad, cotizaciones y facturación fiscal electrónica.</li>
+          <li>Registro de proveedores desde la pantalla de compras.</li>
+          <li>Costeo FIFO. El costeo es siempre promedio ponderado.</li>
+          <li>Recuperación de contraseña desde la pantalla de ingreso.</li>
+          <li>Un cliente bloqueado no puede recibir pedidos nuevos, pero la validación no se aplica todavía a facturas y cobros.</li>
+          <li>El descuento máximo del cliente no se valida en líneas de factura que no vienen de un pedido.</li>
+        </ul>
+        <p>Además, en las pantallas de alertas la columna «Almacén» y las columnas «Estado» y «Semáforo» muestran códigos técnicos en lugar de nombres traducidos.</p>
+      </article>
+    </div>
+  </div>
+
+  <button type="button" class="to-top btn primary" (click)="top()" aria-label="Volver al inicio del manual">↑ Inicio</button>
+</section>

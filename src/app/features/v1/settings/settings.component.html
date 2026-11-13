@@ -1,0 +1,91 @@
+<div class="head"><div><h1>Configuración</h1><p class="sub">Empresa, políticas, sucursales, bodegas y maestros</p></div></div>
+
+<div class="tabs">
+  <button [class.active]="tab() === 'empresa'" (click)="tab.set('empresa')">Empresa y políticas</button>
+  <button [class.active]="tab() === 'almacen'" (click)="tab.set('almacen')">Sucursales y bodegas</button>
+  <button [class.active]="tab() === 'maestros'" (click)="tab.set('maestros')">Maestros</button>
+</div>
+
+@if (tab() === 'empresa' && company(); as c) {
+  <form class="panel glass-panel" (ngSubmit)="saveCompany()">
+    <h2>{{ c.legal_name }}</h2>
+    <div class="fields">
+      <label>Nombre comercial <input [value]="form().trade_name" (input)="setForm('trade_name', $any($event.target).value)" /></label>
+      <label>Ident. fiscal <input [value]="form().tax_id" (input)="setForm('tax_id', $any($event.target).value)" /></label>
+      <label>Moneda <input [value]="form().currency_code" maxlength="3" (input)="setForm('currency_code', $any($event.target).value.toUpperCase())" /></label>
+      <label>Zona horaria <input [value]="form().timezone" (input)="setForm('timezone', $any($event.target).value)" /></label>
+      <label>Dirección <input [value]="form().address" (input)="setForm('address', $any($event.target).value)" /></label>
+      <label>Teléfono <input [value]="form().phone" (input)="setForm('phone', $any($event.target).value)" /></label>
+      <label>Correo <input [value]="form().email" (input)="setForm('email', $any($event.target).value)" /></label>
+    </div>
+
+    <h2 class="mt">Políticas de inventario</h2>
+    <div class="fields">
+      <p class="note wide">Costeo del inventario: <strong>promedio ponderado</strong>. Es el único método disponible en la interfaz; cada entrada recalcula el costo promedio del producto en la bodega.</p>
+      <label class="check"><input type="checkbox" [checked]="invPolicy().allow_negative" (change)="setPolicy('allow_negative', $any($event.target).checked)" /> Permitir stock negativo (riesgoso)</label>
+      <label class="check"><input type="checkbox" [checked]="invPolicy().block_sale_expired_lots" (change)="setPolicy('block_sale_expired_lots', $any($event.target).checked)" /> Bloquear venta de lotes vencidos</label>
+    </div>
+
+    <h2 class="mt">Semáforo de vencimientos (días)</h2>
+    <div class="fields">
+      <label>Aviso amarillo (warn) <input type="number" min="1" max="3650" [value]="expPolicy().warn_days" (input)="setExp('warn_days', $any($event.target).value)" /></label>
+      <label>Alerta roja (crítico) <input type="number" min="1" max="3650" [value]="expPolicy().critical_days" (input)="setExp('critical_days', $any($event.target).value)" /></label>
+    </div>
+
+    <button class="btn primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar cambios' }}</button>
+  </form>
+}
+
+@if (tab() === 'almacen') {
+  <div class="grid2">
+    <section class="panel glass-panel">
+      <h2>Sucursales</h2>
+      <ul class="plain">
+        @for (b of branches(); track b.id) { <li><strong>{{ b.code }}</strong> {{ b.name }}</li> }
+      </ul>
+      <div class="row">
+        <input placeholder="código" [value]="newBranch().code" (input)="newBranch.set({...newBranch(), code: $any($event.target).value})" />
+        <input placeholder="nombre" [value]="newBranch().name" (input)="newBranch.set({...newBranch(), name: $any($event.target).value})" />
+        <button class="btn sm" (click)="addBranch()">+ Sucursal</button>
+      </div>
+      <p class="note">Cada sucursal nueva genera automáticamente su bodega ALM-01.</p>
+    </section>
+    <section class="panel glass-panel">
+      <h2>Bodegas</h2>
+      <ul class="plain">
+        @for (w of warehouses(); track w.id) {
+          <li><strong>{{ w.code }}</strong> {{ w.name }} @if (w.allow_negative) { <span class="tag">neg. ok</span> }</li>
+        }
+      </ul>
+      <div class="row">
+        <select [value]="newWh().branch_id" (change)="newWh.set({...newWh(), branch_id: $any($event.target).value})">
+          @for (b of branches(); track b.id) { <option [value]="b.id">{{ b.code }} · {{ b.name }}</option> }
+        </select>
+        <input placeholder="código" [value]="newWh().code" (input)="newWh.set({...newWh(), code: $any($event.target).value})" />
+        <input placeholder="nombre" [value]="newWh().name" (input)="newWh.set({...newWh(), name: $any($event.target).value})" />
+        <button class="btn sm" (click)="addWarehouse()">+ Bodega</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (tab() === 'maestros') {
+  <div class="grid2">
+    <section class="panel glass-panel"><h2>Unidades</h2>
+      <ul class="plain">@for (u of units(); track u.id) { <li><strong>{{ u.code }}</strong> {{ u.name }} <small>{{ u.dimension }}</small></li> }</ul>
+    </section>
+    <section class="panel glass-panel"><h2>Impuestos</h2>
+      <ul class="plain">@for (t of taxes(); track t.id) { <li><strong>{{ t.code }}</strong> {{ t.name }} <small>{{ taxRate(t) }}</small></li> }</ul>
+    </section>
+    <section class="panel glass-panel"><h2>Categorías</h2>
+      <ul class="plain">@for (cat of categories(); track cat.id) { <li><strong>{{ cat.code }}</strong> {{ cat.name }}</li> }</ul>
+    </section>
+    <section class="panel glass-panel"><h2>Marcas / atributos</h2>
+      <ul class="plain">
+        @for (b of brands(); track b.id) { <li>{{ b.name }}</li> }
+        @for (a of attributes(); track a.id) { <li><em>atributo:</em> {{ a.label }} ({{ a.value_type }}@if (a.required) { · obligatorio })</li> }
+      </ul>
+    </section>
+  </div>
+  <p class="note">Los maestros se administran con la API (`/catalog/...`) o mediante alta desde Catálogo; aquí se listan para verificación.</p>
+}

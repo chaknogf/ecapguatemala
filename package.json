@@ -1,0 +1,43 @@
+{
+  "name": "synvapp-inventory",
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "server:dev": "pnpm --dir server dev",
+    "server:build": "pnpm --dir server build",
+    "server:start": "pnpm --dir server start"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "@angular/router": "^22.2.0",
+    "@hono/node-server": "1.19.17",
+    "@libsql/client": "^0.18.0",
+    "@vercel/analytics": "^2.0.1",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.21.3",
+    "hono": "4.13.13",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.1",
+    "@angular/cli": "^22.2.1",
+    "@angular/compiler-cli": "^22.2.0",
+    "@types/node": "^22",
+    "happy-dom": "^20.14.5",
+    "prettier": "^3.8.1",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.3"
+  }
+}

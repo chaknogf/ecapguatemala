@@ -1,0 +1,12 @@
+<div class="scanner">
+  <div class="header">
+    <strong>Escanear código de barras</strong>
+    <button type="button" (click)="stop()">Cerrar</button>
+  </div>
+  <div class="viewport">
+    <video #video autoplay playsinline></video>
+  </div>
+  @if (error()) {
+    <p class="err">{{ error() }}</p>
+  }
+</div>

@@ -1,0 +1,53 @@
+<div class="head">
+  <div><h1>Clientes</h1><p class="sub">CRM comercial · crédito, descuentos autorizados y saldo</p></div>
+  @if (canWrite()) { <button class="btn primary" (click)="showForm.set(!showForm())">{{ showForm() ? 'Cerrar' : '+ Nuevo cliente' }}</button> }
+</div>
+
+@if (showForm()) {
+  <form class="panel glass-panel" (ngSubmit)="save()">
+    <h2>Nuevo cliente</h2>
+    <div class="fields">
+      <label>Código* <input [value]="form().code" (input)="set('code', $any($event.target).value)" /></label>
+      <label>Nombre / razón social* <input [value]="form().name" (input)="set('name', $any($event.target).value)" /></label>
+      <label>Tipo
+        <select [value]="form().party_type" (change)="set('party_type', $any($event.target).value)">
+          <option value="individual">Individual</option><option value="company">Empresa</option>
+        </select>
+      </label>
+      <label>Identificación fiscal <input [value]="form().tax_id" (input)="set('tax_id', $any($event.target).value)" /></label>
+      <label>Correo <input type="email" [value]="form().email" (input)="set('email', $any($event.target).value)" /></label>
+      <label>Teléfono <input [value]="form().phone" (input)="set('phone', $any($event.target).value)" /></label>
+      <label>Límite de crédito <input type="number" step="0.01" min="0" [value]="form().credit_limit" (input)="set('credit_limit', $any($event.target).value)" /></label>
+      <label>Descuento máx. % <input type="number" step="0.1" min="0" max="100" [value]="form().max_discount_pct" (input)="set('max_discount_pct', $any($event.target).value)" /></label>
+      <label>Plazo días <input type="number" min="0" [value]="form().payment_terms_days" (input)="set('payment_terms_days', $any($event.target).value)" /></label>
+    </div>
+    <button class="btn primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Crear cliente' }}</button>
+  </form>
+}
+
+<div class="toolbar">
+  <input type="search" placeholder="Buscar cliente…" [value]="search()" (input)="onSearch($any($event.target).value)" />
+</div>
+
+<div class="table-wrap glass-panel">
+  @if (loading()) { <div class="rows"><span class="spin"></span> Cargando…</div> }
+  @else if (!items().length) { <div class="empty">Sin clientes.</div> }
+  @else {
+    <table>
+      <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Ident. fiscal</th><th class="num">Límite</th><th class="num">Desc. máx</th><th>Estado</th></tr></thead>
+      <tbody>
+        @for (c of items(); track c.id) {
+          <tr>
+            <td class="mono">{{ c.code }}</td>
+            <td><strong>{{ c.name }}</strong><br /><small>{{ c.email || c.phone || '' }}</small></td>
+            <td>{{ typeLabel(c.party_type) }}</td>
+            <td>{{ c.tax_id || '—' }}</td>
+            <td class="num">{{ c.credit_limit ?? '—' }}</td>
+            <td class="num">{{ c.max_discount_pct }}%</td>
+            <td><span [class]="'pill ' + (c.status === 'active' ? 'on' : 'off')">{{ c.status }}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,0 +1,121 @@
+<div class="head">
+  <div>
+    <p class="eyebrow">Panel de control</p>
+    <h1>Hola, {{ firstName() }}</h1>
+    <p class="sub">{{ today }} · {{ roleLabel() }}</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn ghost" routerLink="/" target="_blank" rel="noopener">Ver sitio</a>
+    <a class="btn primary" routerLink="/app/courses">Nuevo curso</a>
+  </div>
+</div>
+
+@if (loading()) {
+  <section class="bento" aria-busy="true">
+    <div class="metric metric-hero skeleton"></div>
+    @for (i of [1, 2, 3, 4, 5]; track i) {
+      <div class="metric skeleton"></div>
+    }
+  </section>
+  <div class="lower">
+    <section class="panel skeleton tall"></section>
+    <aside class="panel skeleton tall"></aside>
+  </div>
+} @else if (stats(); as s) {
+  <section class="bento">
+    <article class="metric metric-hero">
+      <div class="metric-top">
+        <span class="label">Estudiantes</span>
+        <app-nav-icon name="users" />
+      </div>
+      <p class="value">{{ s.total_students }}</p>
+      <p class="hint">Personas en procesos de formación</p>
+      <a class="metric-link" routerLink="/app/users">Gestionar usuarios <span aria-hidden="true">→</span></a>
+    </article>
+
+    <a class="metric" routerLink="/app/courses">
+      <div class="metric-top">
+        <span class="label">Cursos</span>
+        <app-nav-icon name="book" />
+      </div>
+      <p class="value">{{ s.total_courses }}</p>
+      <p class="hint">Catálogo académico</p>
+    </a>
+
+    <a class="metric" routerLink="/app/classrooms">
+      <div class="metric-top">
+        <span class="label">Aulas</span>
+        <app-nav-icon name="building" />
+      </div>
+      <p class="value">{{ s.total_classrooms }}</p>
+      <p class="hint">Espacios de formación</p>
+    </a>
+
+    <a class="metric metric-small" routerLink="/app/enrollments">
+      <div class="metric-top">
+        <span class="label">Inscripciones</span>
+        <app-nav-icon name="link" />
+      </div>
+      <p class="value">{{ s.total_enrollments }}</p>
+    </a>
+
+    <div class="metric metric-small">
+      <div class="metric-top">
+        <span class="label">Activos</span>
+        <span class="dot dot-on" aria-hidden="true"></span>
+      </div>
+      <p class="value">{{ s.active_courses }}</p>
+      <p class="hint">Cursos en curso</p>
+    </div>
+
+    <div class="metric metric-small">
+      <div class="metric-top">
+        <span class="label">Finalizados</span>
+        <span class="dot" aria-hidden="true"></span>
+      </div>
+      <p class="value">{{ s.finished_courses }}</p>
+      <p class="hint">Cursos concluidos</p>
+    </div>
+  </section>
+
+  <div class="lower">
+    <section class="panel activity">
+      <div class="panel-head">
+        <div>
+          <h2>Actividad reciente</h2>
+          <p>Últimos movimientos registrados en la plataforma.</p>
+        </div>
+        <a class="link" routerLink="/app/activity">Ver todo</a>
+      </div>
+
+      <ul class="timeline">
+        @for (a of s.recent_activity; track a.id) {
+          <li>
+            <span class="marker" aria-hidden="true"></span>
+            <div class="activity-body">
+              <div class="activity-row">
+                <strong>{{ a.action }}</strong>
+                <time>{{ when(a.created_at) }}</time>
+              </div>
+              <p>{{ a.entity_type }} <span class="mono">{{ a.entity_id }}</span></p>
+            </div>
+          </li>
+        } @empty {
+          <li class="empty-activity">Sin actividad registrada por ahora.</li>
+        }
+      </ul>
+    </section>
+
+    <aside class="panel side">
+      <h2>Accesos rápidos</h2>
+      <p class="side-sub">Las tareas más frecuentes de la gestión académica.</p>
+      <nav class="quick" aria-label="Accesos rápidos">
+        <a routerLink="/app/courses"><app-nav-icon name="book" /><span>Cursos</span><span class="arrow" aria-hidden="true">→</span></a>
+        <a routerLink="/app/classrooms"><app-nav-icon name="building" /><span>Aulas</span><span class="arrow" aria-hidden="true">→</span></a>
+        <a routerLink="/app/enrollments"><app-nav-icon name="link" /><span>Asignaciones</span><span class="arrow" aria-hidden="true">→</span></a>
+        <a routerLink="/app/grades"><app-nav-icon name="clipboard" /><span>Calificaciones</span><span class="arrow" aria-hidden="true">→</span></a>
+        <a routerLink="/app/announcements"><app-nav-icon name="megaphone" /><span>Avisos</span><span class="arrow" aria-hidden="true">→</span></a>
+      </nav>
+    </aside>
+  </div>
+}
