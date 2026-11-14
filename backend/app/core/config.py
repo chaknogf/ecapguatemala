@@ -44,6 +44,12 @@ class Settings(BaseSettings):
 
     bootstrap_admin_email: str | None = None
 
+    # Integración con Moodle. El token del servicio se guarda cifrado en la base
+    # de datos; si no se define LMS_SECRET_KEY se deriva de JWT_SECRET.
+    lms_secret_key: str | None = None
+    lms_http_timeout_seconds: int = 8
+    lms_allowed_hosts: list[str] = Field(default_factory=list)
+
     @field_validator("environment")
     @classmethod
     def _norm_env(cls, v: str) -> str:

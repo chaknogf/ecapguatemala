@@ -49,6 +49,12 @@ import { Component, Input } from '@angular/core';
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         }
+        @case ('plug') {
+          <path d="M12 22v-5" />
+          <path d="M9 8V2" />
+          <path d="M15 8V2" />
+          <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" />
+        }
         @case ('clipboard') {
           <rect x="8" y="2" width="8" height="4" rx="1" />
           <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />

@@ -100,8 +100,9 @@ Roles: `admin`, `editor`, `teacher`, `student`. El backend autoriza; el frontend
 │   │   └── modules/
 │   │       ├── identity/       # usuarios, roles, auth, auditoría
 │   │       ├── academic/       # cursos, aulas, contenido, notas, avisos, progreso
-│   │       └── cms/            # landing_section, publication, news_item
-│   ├── alembic/                # Migraciones (2 revisiones)
+│   │       ├── cms/            # landing_section, publication, news_item
+│   │       └── lms/            # conexión Moodle: configuración, cifrado y prueba
+│   ├── alembic/                # Migraciones (3 revisiones)
 │   ├── tests/                  # LEGADO del stock (no cubre ECAP)
 │   └── .env.example            # Plantilla de configuración
 ├── proxy.conf.json             # /api/v1 → localhost:8000
@@ -288,6 +289,9 @@ Archivo: `backend/.env` (plantilla en `backend/.env.example`).
 | `UPLOAD_DIR` | `data/uploads` | — | Reservado para archivos |
 | `MAX_UPLOAD_MB` | `5` | — | Reservado para archivos |
 | `BACKUP_DIR` | `data/backups` | — | Reservado para respaldos |
+| `LMS_SECRET_KEY` | derivada de `JWT_SECRET` | — | Clave para cifrar el token de Moodle; defina una propia en producción |
+| `LMS_HTTP_TIMEOUT_SECONDS` | `8` | igual | Timeout de las llamadas a Moodle |
+| `LMS_ALLOWED_HOSTS` | `[]` | — | Lista opcional de dominios de Moodle permitidos |
 
 En producción `assert_production_safe()` falla al arrancar si `ENVIRONMENT=production` y el
 secreto es el de desarrollo, mide menos de 32 caracteres, o si `DEBUG=true`.
@@ -334,6 +338,7 @@ siembran en la tabla `role`. El frontend replica un subconjunto en
 | `announcements.*` | ✅ | ✅ | ✅ | lectura |
 | `progress.read` | ✅ | — | ✅ | ✅ |
 | `reports.read` | ✅ | ✅ | ✅ | — |
+| `lms.manage` | ✅ | — | — | — |
 | `*` (comodín) | ✅ | — | — | — |
 
 Reglas de navegación:
@@ -442,6 +447,7 @@ públicas (`published_only=true` por defecto).
 | `/app/grades` | `GradesComponent` | Autenticado |
 | `/app/announcements` | `AnnouncementsComponent` | Autenticado |
 | `/app/activity` | `ActivityComponent` | Autenticado |
+| `/app/integration` | `IntegrationComponent` | `lms.manage` |
 | `/app/landing` | `LandingManageComponent` | `landing.manage` |
 | `/app/change-password` | `ChangePasswordComponent` | Autenticado |
 | `/portal/home` | `PortalHomeComponent` | `student` |
@@ -493,6 +499,22 @@ Reglas rápidas:
 `angular.json` permite hasta **32 kB** de aviso y **40 kB** de error por hoja de componente.
 El landing ronda los 30 kB por su riqueza visual; si crece, divida estilos o suba el límite
 conscientemente.
+
+### Integración con Moodle (opcional)
+
+El panel incluye `/app/integration` (solo `admin`) para conectar un Moodle externo, ya sea
+autoalojado o MoodleCloud:
+
+- Se configuran URL raíz, token del servicio externo, estrategia de acceso (`link_only`,
+  `oidc`, `lti`) y sincronización.
+- El token se guarda cifrado con `LMS_SECRET_KEY` (o derivada de `JWT_SECRET`) y nunca se
+  devuelve al frontend.
+- “Probar conexión” llama a `core_webservice_get_site_info` y detecta qué funciones expone
+  el sitio; “Guardar y activar” solo promueve el borrador si la prueba es exitosa.
+- Los cambios se guardan como borrador: una configuración activa no se rompe al editar.
+
+La integración es independiente del hosting: si el plan no habilita servicios web, el CRM
+funciona en modo enlace. El detalle operativo está en `AGENTS.md`.
 
 ---
 

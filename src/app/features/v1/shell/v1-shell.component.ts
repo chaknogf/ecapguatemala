@@ -39,6 +39,7 @@ export class V1ShellComponent {
     { path: '/app/grades', label: 'Calificaciones', icon: 'clipboard', perm: 'grades.read' },
     { path: '/app/announcements', label: 'Avisos', icon: 'megaphone', perm: 'announcements.read' },
     { path: '/app/activity', label: 'Actividad', icon: 'chart', perm: 'reports.read' },
+    { path: '/app/integration', label: 'Integración', icon: 'plug', perm: 'lms.manage' },
     { path: '/app/landing', label: 'Sitio público', icon: 'globe', perm: 'landing.manage' },
   ];
 

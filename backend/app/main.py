@@ -10,6 +10,7 @@ from app.modules.cms.router import router as cms_router
 from app.modules.identity.router_audit import router as audit_router
 from app.modules.identity.router_auth import router as auth_router
 from app.modules.identity.router_users import router as users_router
+from app.modules.lms.router import router as lms_router
 
 def create_app() -> FastAPI:
     settings = get_settings()
@@ -37,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_router)
     app.include_router(academic_router)
     app.include_router(cms_router)
+    app.include_router(lms_router)
 
     @app.get("/api/v1/health")
     def health() -> dict:

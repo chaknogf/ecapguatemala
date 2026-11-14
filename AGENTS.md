@@ -66,9 +66,10 @@ Credenciales: `admin@ecap.demo` / `editor@ecap.demo` / `maestro@ecap.demo` /
 | `modules/identity/` | `models`, `schemas`, `service` (RBAC + login), `router_auth`, `router_users`, `router_audit` |
 | `modules/academic/` | Cursos, aulas, unidades, lecciones, recursos, inscripciones, notas, avisos, progreso, stats |
 | `modules/cms/` | Landing: secciones, publicaciones, noticias |
+| `modules/lms/` | Conexión Moodle: configuración singleton, cifrado del token, prueba de conexión y capacidades |
 | `seed.py` | Datos demo (usuarios, cursos, aulas, contenido, CMS) |
 | `cli.py` | `secret`, `create-admin` |
-| `alembic/` | `env.py` + `versions/` (2 revisiones) |
+| `alembic/` | `env.py` + `versions/` (3 revisiones) |
 
 Patrón de una ruta:
 
@@ -106,6 +107,7 @@ def create_course(
 | `features/ecap/landing/` | Landing pública (`.ts` + `.html` + `.scss`) |
 | `features/ecap/landing-manage/` | CMS del landing |
 | `features/ecap/{users,courses,classrooms,content,enrollments,grades,announcements,activity}/` | CRUDs del panel |
+| `features/ecap/integration/` | Configuración de Moodle (solo `admin`, permiso `lms.manage`) |
 | `features/ecap/portal/` | Shell + páginas del estudiante |
 | `features/v1/login/` | Login split-screen |
 | `features/v1/shell/` | Shell del panel (sidebar, topbar, drawer móvil, bottom nav) |
@@ -252,6 +254,9 @@ alembic upgrade head
 | Landing y tema global | El landing **no** debe usar `var(--bg-primary)` ni tokens oscuros; define sus propios tokens. |
 | CORS | Si cambia el puerto/dominio del frontend, actualizar `CORS_ORIGINS` y reiniciar el backend. |
 | Swagger | Solo disponible si `ENVIRONMENT != production`. |
+| Token de Moodle | Se cifra en `lms_connection` con `LMS_SECRET_KEY` (o derivada de `JWT_SECRET`). Nunca sale al frontend; no lo loguee ni lo audite. |
+| `lms_connection` | Una sola fila (`singleton_key = 'default'`). Editar guarda un borrador; activar prueba contra Moodle y solo entonces promueve. |
+| Moodle en desarrollo | Con `ENVIRONMENT != production` se permiten `http://` y hosts privados para probar un Moodle local; en producción se rechazan. |
 
 ---
 
@@ -278,6 +283,7 @@ Checklist visual:
 - [ ] `/` carga sin sesión; CTAs llevan a `/login`.
 - [ ] `/login` muestra cuentas demo y regresa al sitio.
 - [ ] `admin` ve el panel completo y `/app/landing`.
+- [ ] `admin` ve `/app/integration`; `editor`, `teacher` y `student` no.
 - [ ] `editor` ve cursos, contenidos, usuarios (solo lectura) y sitio público.
 - [ ] `teacher` ve solo sus aulas.
 - [ ] `student` aterriza en `/portal/home`; no puede abrir `/app`.
@@ -287,7 +293,49 @@ Checklist visual:
 
 ---
 
-## 8. Archivos que no deben modificarse sin intención explícita
+## 8. Pendientes (backlog activo)
+
+### Decisión pendiente del cliente
+
+- [ ] Confirmar si su Moodle es **autoalojado** o **MoodleCloud**, y la versión.
+      Eso define si el login único va por **OIDC** (CRM como IdP) o por **LTI 1.3**.
+- [ ] Confirmar la regla de dominio: **el CRM matricula, Moodle califica**. No sincronizar
+      el mismo campo en ambas direcciones.
+
+### Integración Moodle
+
+- [x] Configuración desde `/app/integration`: URL, token cifrado, prueba de conexión,
+      detección de capacidades, borrador y activación.
+- [ ] Botón **“Aula virtual”** en el detalle del aula (panel) y en el portal, usando la
+      `base_url` y la estrategia guardadas.
+- [ ] Tabla `lms_link` (`entity_type`, `entity_id`, `external_id`, `external_url`) y mapeo
+      estable por `idnumber` de Moodle (UUID del CRM). No usar el email como clave.
+- [ ] Tabla `lms_sync_job` (outbox) + comando `python -m app.cli lms-sync` para cron/timer.
+- [ ] Push: usuarios, cursos, aulas → cohortes/grupos, matrículas. Una sola dirección.
+- [ ] Pull: notas y progreso. Antes, agregar `Grade.source` + `Grade.external_ref` con
+      índice único para que reimportar no duplique.
+- [ ] Enmascarar/ocultar la edición de contenido en aulas vinculadas (solo lectura + CTA).
+- [ ] Endpoint `/api/v1/lms/launch/{classroom_id}` que resuelva la estrategia (enlace,
+      OIDC o LTI) sin que el frontend sepa cuál está activa.
+- [ ] Probar contra un Moodle local en Docker antes de tocar el del cliente.
+
+### Endurecimiento
+
+- [ ] Exigir `LMS_SECRET_KEY` propia cuando `ENVIRONMENT=production` (hoy se deriva de
+      `JWT_SECRET`).
+- [ ] Rate limit en `POST /api/v1/lms/test` y auditoría de intentos fallidos.
+- [ ] Confirmar que el token nunca aparece en logs, `ActivityLog` ni respuestas de error.
+- [ ] Revisar DNS rebinding si se despliega en una red compartida.
+
+### Calidad
+
+- [ ] Tests del módulo `lms` (hoy `backend/tests/` es del stock y no cubre ECAP).
+- [ ] Verificar 403 en `/api/v1/lms/*` para `editor`, `teacher` y `student`.
+- [ ] Checklist visual de los 4 roles tras cada cambio de integración.
+
+---
+
+## 9. Archivos que no deben modificarse sin intención explícita
 
 - `backend/alembic/versions/*` ya aplicadas (crear una nueva, no editar históricas).
 - `src/styles.scss` y `_v1-ui.scss`: cambios globales; afectan todas las pantallas.

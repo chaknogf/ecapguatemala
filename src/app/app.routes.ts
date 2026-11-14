@@ -21,6 +21,7 @@ export const routes: Routes = [
       { path: 'grades', loadComponent: () => import('./features/ecap/grades/grades.component').then((m) => m.GradesComponent) },
       { path: 'announcements', loadComponent: () => import('./features/ecap/announcements/announcements.component').then((m) => m.AnnouncementsComponent) },
       { path: 'activity', loadComponent: () => import('./features/ecap/activity/activity.component').then((m) => m.ActivityComponent) },
+      { path: 'integration', canActivate: [v1PermissionGuard('lms.manage')], loadComponent: () => import('./features/ecap/integration/integration.component').then((m) => m.IntegrationComponent) },
       { path: 'landing', canActivate: [v1PermissionGuard('landing.manage')], loadComponent: () => import('./features/ecap/landing-manage/landing-manage.component').then((m) => m.LandingManageComponent) },
       { path: 'change-password', loadComponent: () => import('./features/v1/account/change-password.component').then((m) => m.ChangePasswordComponent) },
     ],

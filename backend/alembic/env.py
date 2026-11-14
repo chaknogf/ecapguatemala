@@ -11,6 +11,7 @@ from app.core import types  # noqa: F401  (registra el tipo UUID7)
 from app.modules.identity import models as identity_models  # noqa: F401
 from app.modules.academic import models as academic_models  # noqa: F401
 from app.modules.cms import models as cms_models  # noqa: F401
+from app.modules.lms import models as lms_models  # noqa: F401
 
 config = context.config
 
